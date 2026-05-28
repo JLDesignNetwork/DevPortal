@@ -33,6 +33,27 @@ Dev Portal is a local developer dashboard built with Laravel, Vanilla CSS, and m
    - Guarded by a double-confirmation prompt to prevent accidental loss.
    - **Strict Security Verification**: The backend strictly validates that the project is nested exactly at `{allowlisted_path}/{category}/{projectName}`. System roots and directories outside allowlisted paths are mathematically shielded from execution.
 
+6. **Configurable Domain Extension**:
+   - Set the local TLD suffix (e.g., `.test`, `.local`, or `.localhost`) under portal settings.
+   - The "Open Site" buttons automatically compile to use your configured suffix.
+
+---
+
+## Configuration & Usage
+
+Once the Dev Portal is running, click the **Settings** icon in the top right header to customize your environment:
+
+1. **Scan Locations**:
+   - Add one or more watch directories on your local drive (e.g., `/Users/username/Sites` or `/Users/username/Code`).
+   - Inside each watch directory, Dev Portal expects three category subfolders: `Active/`, `Archive/`, and `Sandbox/`.
+2. **Local Domain**:
+   - Set the local domain extension (TLD) corresponding to your local server setup (e.g. `test` for Laravel Valet/Herd, `local`, or `localhost`).
+3. **Scanning Cache**:
+   - Toggle directory scanner results caching to optimize dashboard load performance.
+   - Customize the cache TTL (Time to Live) value in seconds.
+4. **Dashboard Widgets**:
+   - Adjust limits for the "Recently Updated" and "Most Active (Git)" dashboard widgets.
+
 ---
 
 ## Technology Stack
@@ -99,3 +120,4 @@ We enforce strict style checks using Laravel Pint:
 ```bash
 ./vendor/bin/pint
 ```
+
