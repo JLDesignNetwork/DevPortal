@@ -121,3 +121,10 @@ We enforce strict style checks using Laravel Pint:
 ./vendor/bin/pint
 ```
 
+---
+
+## License
+
+This project is open-source and licensed under the [MIT License](file:///Users/jefflangdon/Desktop/DevPortal/LICENSE). Feel free to use, modify, and distribute it as-is.
+
+
