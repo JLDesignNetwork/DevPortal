@@ -5,6 +5,14 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-06-12
+
+### Changed
+- **Housekeeping & Standardization**: Enforced rigorous compliance with the `GOLD_STANDARD.md` and `ANTIGRAVITY.md` blueprints.
+- **File-Level Versioning**: Injected `@since 1.2.0` and `@version 1.2.0` tracking tags across all core PHP, JS, and CSS files.
+- **README Standardization**: Rebuilt the README structure to feature Shields.io technology badges and an auto-linked Table of Contents.
+- **Composer Metadata**: Updated `composer.json` name to `jldn/devportal` and refined description keywords to reflect its local dashboard purpose.
+
 ## [1.2.0] — 2026-05-28
 
 ### Added

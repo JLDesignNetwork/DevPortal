@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @since 1.2.0
+ *
+ * @version 1.2.0
+ */
+
 declare(strict_types=1);
 
 namespace App\Services;
@@ -27,7 +33,11 @@ class ProjectScanner
                 $categoryPath = $basePath.'/'.$category;
 
                 if (File::isDirectory($categoryPath)) {
-                    $projectDirs = File::directories($categoryPath);
+                    try {
+                        $projectDirs = File::directories($categoryPath);
+                    } catch (\UnexpectedValueException $e) {
+                        continue;
+                    }
 
                     foreach ($projectDirs as $projectPath) {
                         $projectPathStr = (string) $projectPath;
@@ -100,6 +110,7 @@ class ProjectScanner
                             'dependencies' => $dependencies,
                             'git_commits' => $gitCommits,
                             'git_activity_count' => $gitActivityCount,
+                            'has_web_entry' => $this->hasWebEntryPoint($projectPathStr),
                             ...$changelogData,
                             ...$gitDetails,
                         ];
@@ -112,6 +123,32 @@ class ProjectScanner
         usort($allProjects, fn (array $a, array $b): int => $b['last_modified_timestamp'] <=> $a['last_modified_timestamp']);
 
         return $allProjects;
+    }
+
+    private function hasWebEntryPoint(string $path): bool
+    {
+        $entryPoints = [
+            'index.php',
+            'index.html',
+            'public/index.php',
+            'public/index.html',
+            'routes/web.php',
+            'src/index.js',
+            'src/index.ts',
+            'src/main.js',
+            'src/main.ts',
+            'src/App.vue',
+            'src/App.jsx',
+            'src/App.tsx',
+        ];
+
+        foreach ($entryPoints as $entry) {
+            if (File::exists($path.'/'.$entry)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function toTitleCase(string $name): string
@@ -129,14 +166,21 @@ class ProjectScanner
         $description = null;
 
         // Get name (first heading)
-        if (preg_match('/^#\s*(.*)$/m', $content, $matches) || preg_match('/^##\s*(.*)$/m', $content, $matches)) {
-            $projectName = trim(strip_tags($matches[1]));
+        if (preg_match('/^\s*#{1,2}\s+(.*)$/m', $content, $matches)) {
+            $extracted = trim(strip_tags($matches[1]));
+
+            // Ignore generic section headers (often preceded by emojis)
+            $isGenericSection = preg_match('/^(?:[\p{So}]\s*)?(features|installation|getting started|usage|configuration|setup|about|license|changelog)\b/iu', $extracted);
+
+            if (! $isGenericSection && $extracted !== '') {
+                $projectName = $extracted;
+            }
         }
 
         // Get version
         if (preg_match('/(?:Version|v)\s*(\d+\.\d+\.\d+)/i', $content, $matches)) {
             $projectVersion = $matches[1];
-        } elseif (preg_match('/img\.shields\.io\/packagist\/v\/[^\/]+\/[^\/]+(?:\?label=)?([^\s"]+)/i', $content, $matches)) {
+        } elseif (preg_match('/img\.shields\.io\/packagist\/v\/[^\/]+\/[^\/]+(?:\?label=)?(v?\d+\.\d+(?:\.\d+)?)/i', $content, $matches)) {
             $projectVersion = $matches[1];
         } elseif (preg_match('/Laravel\s*(\d+)/i', $content, $matches)) {
             $projectVersion = 'Laravel '.$matches[1];
@@ -198,7 +242,7 @@ class ProjectScanner
     /**
      * Parse CHANGELOG contents.
      */
-    private function parseChangelog(string $content): array
+    public function parseChangelog(string $content): array
     {
         $version = null;
         $date = null;
@@ -226,12 +270,19 @@ class ProjectScanner
             }
 
             if ($sectionFound && $trimmed !== '') {
-                if (str_starts_with($trimmed, '### ')) {
-                    $bulletPoints[] = '<strong>'.trim(substr($trimmed, 4)).'</strong>:';
-                } elseif (str_starts_with($trimmed, '- ') || str_starts_with($trimmed, '* ')) {
-                    $bulletPoints[] = trim($line);
+                $lineText = $trimmed;
+                if (str_starts_with($lineText, '### ')) {
+                    $bulletPoints[] = '<strong>'.trim(substr($lineText, 4)).'</strong>:';
                 } else {
-                    $bulletPoints[] = $trimmed;
+                    if (str_starts_with($lineText, '- ') || str_starts_with($lineText, '* ')) {
+                        $lineText = trim($line);
+                    }
+
+                    // Simple Markdown replacement for bold and inline code
+                    $lineText = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $lineText);
+                    $lineText = preg_replace('/`(.*?)`/', '<code>$1</code>', $lineText);
+
+                    $bulletPoints[] = $lineText;
                 }
             }
         }
@@ -303,15 +354,17 @@ class ProjectScanner
         ];
     }
 
-    private function getProductionVersion(string $path, ?string $readmeVersion, ?string $changelogVersion): string
+    public function getProductionVersion(string $path, ?string $readmeVersion, ?string $changelogVersion): string
     {
+        $versions = [];
+
         // 1. Check package.json
         $packageJsonPath = $path.'/package.json';
         if (File::exists($packageJsonPath)) {
             $content = File::get($packageJsonPath);
             $decoded = json_decode($content, true);
             if (is_array($decoded) && isset($decoded['version'])) {
-                return (string) $decoded['version'];
+                $versions['package'] = (string) $decoded['version'];
             }
         }
 
@@ -321,7 +374,7 @@ class ProjectScanner
             $content = File::get($composerJsonPath);
             $decoded = json_decode($content, true);
             if (is_array($decoded) && isset($decoded['version'])) {
-                return (string) $decoded['version'];
+                $versions['composer'] = (string) $decoded['version'];
             }
         }
 
@@ -332,22 +385,38 @@ class ProjectScanner
             if ($process->isSuccessful()) {
                 $tag = trim($process->getOutput());
                 if ($tag !== '') {
-                    return $tag;
+                    $versions['git'] = $tag;
                 }
             }
         }
 
         // 4. Check CHANGELOG version
         if ($changelogVersion !== null && $changelogVersion !== '') {
-            return $changelogVersion;
+            $versions['changelog'] = $changelogVersion;
         }
 
         // 5. Fallback to README version, but ignore if it's just a framework tag (e.g. "Laravel 13")
         if ($readmeVersion !== null && $readmeVersion !== '' && ! str_contains(strtolower($readmeVersion), 'laravel')) {
-            return $readmeVersion;
+            $versions['readme'] = $readmeVersion;
         }
 
-        return 'N/A';
+        if ($versions === []) {
+            return 'N/A';
+        }
+
+        $highestVersion = null;
+        $highestCleanVersion = null;
+
+        foreach ($versions as $source => $rawVersion) {
+            $cleanVersion = ltrim(trim($rawVersion), 'vV');
+
+            if ($highestCleanVersion === null || version_compare($cleanVersion, $highestCleanVersion, '>')) {
+                $highestCleanVersion = $cleanVersion;
+                $highestVersion = $rawVersion;
+            }
+        }
+
+        return $highestVersion ?? 'N/A';
     }
 
     private function getDependencies(string $path): array

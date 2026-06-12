@@ -1,29 +1,52 @@
+/**
+ * @since 1.2.0
+ * @version 1.2.0
+ */
+import { JLMeter } from './components/meter.js';
+
+if (!customElements.get('jl-meter')) {
+    customElements.define('jl-meter', JLMeter);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // State management
     let projects = [];
     let activeCategory = 'Dashboard';
     let searchQuery = '';
+    let sortMode = 'date-desc';
     let settings = {
         cache_enabled: false,
         cache_ttl: 300,
         allowlisted_paths: [],
         splash_recent_count: 5,
         splash_active_count: 5,
-        domain_extension: 'test'
+        domain_extension: 'test',
+        sync_exclude_categories: ['Sandbox'],
+        sync_exclude_projects: [],
+        sync_include_categories: [],
+        sync_include_projects: [],
+        entry_exclude_categories: ['Archive'],
+        entry_exclude_projects: [],
+        entry_include_categories: [],
+        entry_include_projects: [],
+        default_sort: 'date-desc'
     };
 
     // Cache DOM elements
     const projectListContainer = document.getElementById('project-list');
-    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabButtons = document.querySelectorAll('.controls-bar .tab-button');
     const searchInput = document.getElementById('search-input');
     const statsActiveCount = document.getElementById('stats-active-count');
     const statsArchiveCount = document.getElementById('stats-archive-count');
     const statsSandboxCount = document.getElementById('stats-sandbox-count');
 
-    // Settings Modal Elements
-    const settingsModal = document.getElementById('settings-modal');
+    // Settings View Elements
+    const settingsView = document.getElementById('settings-view');
+    const maintenanceView = document.getElementById('maintenance-view');
+    const controlsBar = document.querySelector('.controls-bar');
+    const controlsActions = document.getElementById('controls-actions');
     const settingsToggleBtn = document.getElementById('settings-toggle-btn');
-    const settingsCloseBtn = document.getElementById('settings-modal-close');
+    const maintenanceToggleBtn = document.getElementById('maintenance-toggle-btn');
     const settingsCancelBtn = document.getElementById('settings-modal-cancel');
     const settingsForm = document.getElementById('settings-form');
     const settingsCacheEnabled = document.getElementById('settings-cache-enabled');
@@ -35,6 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsSplashRecentCount = document.getElementById('settings-splash-recent-count');
     const settingsSplashActiveCount = document.getElementById('settings-splash-active-count');
     const settingsDomainExtension = document.getElementById('settings-domain-extension');
+    const settingsSyncExcludeCategories = document.getElementById('settings-sync-exclude-categories');
+    const settingsSyncExcludeProjects = document.getElementById('settings-sync-exclude-projects');
+    const settingsSyncIncludeCategories = document.getElementById('settings-sync-include-categories');
+    const settingsSyncIncludeProjects = document.getElementById('settings-sync-include-projects');
+    const settingsEntryExcludeCategories = document.getElementById('settings-entry-exclude-categories');
+    const settingsEntryExcludeProjects = document.getElementById('settings-entry-exclude-projects');
+    const settingsEntryIncludeCategories = document.getElementById('settings-entry-include-categories');
+    const settingsEntryIncludeProjects = document.getElementById('settings-entry-include-projects');
+    const settingsDefaultSort = document.getElementById('settings-default-sort');
 
     // Project Details Modal Elements
     const projectDetailsModal = document.getElementById('project-details-modal');
@@ -110,7 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         try {
-            const response = await fetch('/api/projects');
+            const response = await fetch('/api/projects', {
+                headers: {
+                    'Accept': 'application/json'
+                },
+                cache: 'no-store'
+            });
             if (!response.ok) throw new Error('Failed to fetch projects.');
             projects = await response.json();
             updateStats();
@@ -149,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': getCsrfToken()
                 },
                 body: JSON.stringify({
@@ -181,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': getCsrfToken()
                 },
                 body: JSON.stringify({
@@ -206,9 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderDashboard() {
         projectListContainer.innerHTML = '';
         
-        // Hide search wrapper when dashboard is active
-        if (searchInput) {
-            searchInput.parentElement.style.display = 'none';
+        const controlsActions = document.getElementById('controls-actions');
+        if (controlsActions) {
+            controlsActions.style.display = 'none';
         }
 
         const dashboardGrid = document.createElement('div');
@@ -330,9 +369,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Show search wrapper when dashboard is not active
-        if (searchInput) {
-            searchInput.parentElement.style.display = 'block';
+        const controlsActions = document.getElementById('controls-actions');
+        if (controlsActions) {
+            controlsActions.style.display = 'flex';
         }
 
         projectListContainer.innerHTML = '';
@@ -345,6 +384,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 (project.description && project.description.toLowerCase().includes(searchQuery)) ||
                 project.relative_path.toLowerCase().includes(searchQuery);
             return matchesCategory && matchesSearch;
+        });
+
+        // Sort projects
+        filtered.sort((a, b) => {
+            const cleanNameA = (a.name || '').replace(/^[^a-zA-Z0-9]+/, '').trim().toLowerCase();
+            const cleanNameB = (b.name || '').replace(/^[^a-zA-Z0-9]+/, '').trim().toLowerCase();
+            
+            switch (sortMode) {
+                case 'date-asc':
+                    return a.last_modified_timestamp - b.last_modified_timestamp;
+                case 'created-desc':
+                    return b.created_at_timestamp - a.created_at_timestamp;
+                case 'created-asc':
+                    return a.created_at_timestamp - b.created_at_timestamp;
+                case 'alpha-asc':
+                    return cleanNameA.localeCompare(cleanNameB);
+                case 'alpha-desc':
+                    return cleanNameB.localeCompare(cleanNameA);
+                case 'date-desc':
+                default:
+                    return b.last_modified_timestamp - a.last_modified_timestamp;
+            }
         });
 
         if (filtered.length === 0) {
@@ -414,7 +475,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ${project.name}
                             </button>
                         </h2>
-                        <span class="project-version-badge">v${project.version || 'N/A'}</span>
+                        <span class="project-version-badge">${
+                            (() => {
+                                let v = project.production_version && project.production_version !== 'N/A' 
+                                    ? project.production_version 
+                                    : (project.version || 'N/A');
+                                if (v !== 'N/A' && !v.toLowerCase().startsWith('v') && !v.toLowerCase().startsWith('laravel')) {
+                                    return 'v' + v;
+                                }
+                                return v;
+                            })()
+                        }</span>
                     </div>
                     <p class="project-description">${project.description || 'No description found in README.md'}</p>
                     
@@ -431,10 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div class="project-actions">
                     <div class="action-buttons">
-                        <a href="http://${project.relative_path.split('/')[1]}.${settings.domain_extension || 'test'}" target="_blank" class="btn btn-primary" title="Open site in browser">
+                        ${project.has_web_entry ? `
+                        <a href="http://${project.relative_path.split('/')[1].toLowerCase()}.${settings.domain_extension || 'test'}" target="_blank" class="btn btn-primary" title="Open site in browser">
                             Open Site
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
                         </a>
+                        ` : ''}
                         <button class="btn btn-icon copy-path-btn" data-path="${project.path}" title="Copy absolute path to clipboard">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         </button>
@@ -526,9 +599,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load settings from backend
     async function loadSettings() {
         try {
-            const response = await fetch('/api/settings');
+            const response = await fetch('/api/settings', {
+                headers: {
+                    'Accept': 'application/json'
+                },
+                cache: 'no-store'
+            });
             if (!response.ok) throw new Error('Failed to load settings.');
             settings = await response.json();
+            
+            // Apply default sort if sortSelect exists
+            if (settings.default_sort) {
+                sortMode = settings.default_sort;
+                const sortSelect = document.getElementById('sort-select');
+                if (sortSelect) sortSelect.value = sortMode;
+            }
+
             populateSettingsForm();
         } catch (error) {
             console.error(error);
@@ -553,6 +639,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (settingsDomainExtension) {
             settingsDomainExtension.value = settings.domain_extension || 'test';
         }
+        if (settingsSyncExcludeCategories) settingsSyncExcludeCategories.value = (settings.sync_exclude_categories || []).join(', ');
+        if (settingsSyncExcludeProjects) settingsSyncExcludeProjects.value = (settings.sync_exclude_projects || []).join(', ');
+        if (settingsSyncIncludeCategories) settingsSyncIncludeCategories.value = (settings.sync_include_categories || []).join(', ');
+        if (settingsSyncIncludeProjects) settingsSyncIncludeProjects.value = (settings.sync_include_projects || []).join(', ');
+        if (settingsEntryExcludeCategories) settingsEntryExcludeCategories.value = (settings.entry_exclude_categories || []).join(', ');
+        if (settingsEntryExcludeProjects) settingsEntryExcludeProjects.value = (settings.entry_exclude_projects || []).join(', ');
+        if (settingsEntryIncludeCategories) settingsEntryIncludeCategories.value = (settings.entry_include_categories || []).join(', ');
+        if (settingsEntryIncludeProjects) settingsEntryIncludeProjects.value = (settings.entry_include_projects || []).join(', ');
+        if (settingsDefaultSort) settingsDefaultSort.value = settings.default_sort || 'date-desc';
         toggleCacheTtlVisibility();
         renderSettingsPaths();
     }
@@ -602,40 +697,86 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Open Settings Modal
-    function openSettingsModal() {
+    // Open Settings View
+    function openSettingsView() {
         loadSettings();
-        if (settingsModal) {
-            settingsModal.classList.add('open');
-            settingsModal.setAttribute('aria-hidden', 'false');
+        if (settingsView && projectListContainer) {
+            projectListContainer.style.display = 'none';
+            maintenanceView.style.display = 'none';
+            if (controlsActions) controlsActions.style.display = 'none';
+            settingsView.style.display = 'block';
+            
+            // Deactivate all tab buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
         }
     }
 
-    // Close Settings Modal
-    function closeSettingsModal() {
-        if (settingsModal) {
-            settingsModal.classList.remove('open');
-            settingsModal.setAttribute('aria-hidden', 'true');
+    // Open Maintenance View
+    function openMaintenanceView() {
+        if (maintenanceView && projectListContainer) {
+            projectListContainer.style.display = 'none';
+            settingsView.style.display = 'none';
+            if (controlsActions) controlsActions.style.display = 'none';
+            maintenanceView.style.display = 'block';
+            
+            // Deactivate all tab buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
         }
     }
 
-    // Bind settings buttons if they exist
+    // Return to Dashboard View
+    function closeSpecialViews() {
+        if (settingsView && maintenanceView && projectListContainer) {
+            settingsView.style.display = 'none';
+            maintenanceView.style.display = 'none';
+            if (controlsActions) controlsActions.style.display = 'flex';
+            projectListContainer.style.display = 'block';
+            
+            // Activate the correct tab based on activeCategory
+            tabButtons.forEach(btn => {
+                if (btn.dataset.category === activeCategory) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            renderProjects();
+        }
+    }
+
+    // Bind view toggles
     if (settingsToggleBtn) {
-        settingsToggleBtn.addEventListener('click', openSettingsModal);
+        settingsToggleBtn.addEventListener('click', openSettingsView);
     }
-    if (settingsCloseBtn) {
-        settingsCloseBtn.addEventListener('click', closeSettingsModal);
+    if (maintenanceToggleBtn) {
+        maintenanceToggleBtn.addEventListener('click', openMaintenanceView);
     }
     if (settingsCancelBtn) {
-        settingsCancelBtn.addEventListener('click', closeSettingsModal);
+        settingsCancelBtn.addEventListener('click', closeSpecialViews);
     }
-    if (settingsModal) {
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) {
-                closeSettingsModal();
-            }
+
+    // Settings Sidebar Nav Logic
+    const settingsNavBtns = document.querySelectorAll('.settings-nav-btn');
+    const settingsPanels = document.querySelectorAll('.settings-panel');
+    settingsNavBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetSection = btn.dataset.section;
+            
+            // Update active states
+            settingsNavBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            settingsPanels.forEach(panel => {
+                if (panel.id === targetSection) {
+                    panel.style.display = 'block';
+                    panel.classList.add('active');
+                } else {
+                    panel.style.display = 'none';
+                    panel.classList.remove('active');
+                }
+            });
         });
-    }
+    });
 
     if (settingsCacheEnabled) {
         settingsCacheEnabled.addEventListener('change', toggleCacheTtlVisibility);
@@ -679,13 +820,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveBtn.textContent = 'Saving...';
             }
 
+            const parseCommaList = (input) => input ? input.value.split(',').map(s => s.trim()).filter(s => s) : [];
+
             const payload = {
                 cache_enabled: settingsCacheEnabled ? settingsCacheEnabled.checked : false,
                 cache_ttl: settingsCacheTtl ? parseInt(settingsCacheTtl.value, 10) : 300,
                 allowlisted_paths: settings.allowlisted_paths,
                 splash_recent_count: settingsSplashRecentCount ? parseInt(settingsSplashRecentCount.value, 10) : 5,
                 splash_active_count: settingsSplashActiveCount ? parseInt(settingsSplashActiveCount.value, 10) : 5,
-                domain_extension: settingsDomainExtension ? settingsDomainExtension.value.trim() : 'test'
+                domain_extension: settingsDomainExtension ? settingsDomainExtension.value.trim() : 'test',
+                sync_exclude_categories: parseCommaList(settingsSyncExcludeCategories),
+                sync_exclude_projects: parseCommaList(settingsSyncExcludeProjects),
+                sync_include_categories: parseCommaList(settingsSyncIncludeCategories),
+                sync_include_projects: parseCommaList(settingsSyncIncludeProjects),
+                entry_exclude_categories: parseCommaList(settingsEntryExcludeCategories),
+                entry_exclude_projects: parseCommaList(settingsEntryExcludeProjects),
+                entry_include_categories: parseCommaList(settingsEntryIncludeCategories),
+                entry_include_projects: parseCommaList(settingsEntryIncludeProjects),
+                default_sort: settingsDefaultSort ? settingsDefaultSort.value : 'date-desc'
             };
 
             try {
@@ -693,6 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': getCsrfToken()
                     },
                     body: JSON.stringify(payload)
@@ -705,7 +858,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 showToast(result.message || 'Settings saved successfully.');
-                closeSettingsModal();
+                await loadSettings();
+                closeSpecialViews();
                 loadProjects(); // Reload projects list with new locations/cache settings
             } catch (error) {
                 showToast(error.message, 'error');
@@ -742,6 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openProjectDetails(project) {
         if (!projectDetailsModal) return;
 
+        projectDetailsModal.dataset.currentProject = project.path;
         detailsModalTitle.textContent = project.name;
         detailsCategoryBadge.textContent = project.category;
         
@@ -871,10 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up tabs click events
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
             activeCategory = button.dataset.category;
-            renderProjects();
+            closeSpecialViews();
         });
     });
 
@@ -883,6 +1036,230 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase().trim();
             renderProjects();
+        });
+    }
+
+    // Set up sort event
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            sortMode = e.target.value;
+            renderProjects();
+        });
+    }
+
+    // Maintenance: Sync All
+    const maintenanceSyncAllBtn = document.getElementById('maintenance-sync-all-btn');
+    const maintenanceSyncLog = document.getElementById('maintenance-sync-log');
+    if (maintenanceSyncAllBtn) {
+        maintenanceSyncAllBtn.addEventListener('click', async () => {
+            if (projects.length === 0) return;
+
+            const excludeCats = (settings.sync_exclude_categories || []).map(s => s.toLowerCase());
+            const excludeProjs = (settings.sync_exclude_projects || []).map(s => s.toLowerCase());
+            const includeCats = (settings.sync_include_categories || []).map(s => s.toLowerCase());
+            const includeProjs = (settings.sync_include_projects || []).map(s => s.toLowerCase());
+
+            const filteredProjects = projects.filter(project => {
+                const cat = (project.category || '').toLowerCase();
+                const name = (project.name || '').toLowerCase();
+
+                // 1. Project-level rules take ultimate precedence
+                if (includeProjs.includes(name)) return true;
+                if (excludeProjs.includes(name)) return false;
+                
+                // 2. Category-level rules take secondary precedence
+                if (includeCats.includes(cat)) return true;
+                if (excludeCats.includes(cat)) return false;
+
+                // 3. Determine default behavior for items not explicitly matched
+                const hasIncludeRules = includeCats.length > 0 || includeProjs.length > 0;
+                const hasExcludeRules = excludeCats.length > 0 || excludeProjs.length > 0;
+
+                // If they provided category whitelists, default to DENY for unmatched categories
+                if (includeCats.length > 0) return false;
+                
+                // If they ONLY provided whitelists, strict default DENY
+                if (hasIncludeRules && !hasExcludeRules) return false;
+
+                // Otherwise (they provided blacklists, or hybrid where whitelist acts as exception), default ALLOW
+                return true;
+            });
+
+            if (filteredProjects.length === 0) {
+                maintenanceSyncLog.innerHTML = `<div style="color: var(--text-muted);">No projects matched the configured Whitelist/Blacklist criteria.</div>`;
+                return;
+            }
+            
+            maintenanceSyncAllBtn.disabled = true;
+            maintenanceSyncAllBtn.textContent = 'Syncing...';
+            
+            maintenanceSyncLog.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <div style="margin-bottom: 0.5rem; color: var(--text-main); font-weight: bold;" id="sync-meter-label">Syncing Projects (0/${filteredProjects.length})</div>
+                    <jl-meter id="sync-meter" value="0" max="${filteredProjects.length}" animated="true" variant="glassmorphic" stripes="true" theme="primary"></jl-meter>
+                </div>
+                <div id="sync-log-details"></div>
+            `;
+            
+            try {
+                let logHtml = '';
+                let successCount = 0;
+                let failCount = 0;
+                
+                const meter = document.getElementById('sync-meter');
+                const meterLabel = document.getElementById('sync-meter-label');
+                const logDetails = document.getElementById('sync-log-details');
+                
+                for (let i = 0; i < filteredProjects.length; i++) {
+                    const project = filteredProjects[i];
+                    try {
+                        const response = await fetch('/api/maintenance/sync-version', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json', 
+                                'X-CSRF-TOKEN': getCsrfToken() 
+                            },
+                            body: JSON.stringify({ path: project.path })
+                        });
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            successCount++;
+                            logHtml += `<div style="margin-bottom: 0.5rem;"><strong style="color:var(--text-main);">${project.name}</strong> -> <span style="color:var(--success);">${result.data.version}</span><br><small style="color:var(--text-muted);">${result.data.updated_files.join(', ')}</small></div>`;
+                        } else {
+                            failCount++;
+                            const errorMessage = result.error || result.message || 'Error';
+                            logHtml += `<div style="color: var(--danger); margin-bottom: 0.5rem;"><strong>${project.name}</strong>: ${errorMessage}</div>`;
+                        }
+                    } catch (e) {
+                        failCount++;
+                        logHtml += `<div style="color: var(--danger); margin-bottom: 0.5rem;"><strong>${project.name}</strong>: Fetch failed</div>`;
+                    }
+                    
+                    meter.setAttribute('value', i + 1);
+                    meterLabel.textContent = `Syncing Projects (${i + 1}/${filteredProjects.length})`;
+                    logDetails.innerHTML = logHtml;
+                }
+                
+                logHtml = `<div style="color: var(--success); margin-bottom: 1rem; font-size: 1.1rem; font-weight: bold;">Sync complete! ${successCount} successful, ${failCount} failed.</div>` + logHtml;
+                logDetails.innerHTML = logHtml;
+                loadProjects();
+            } catch (error) {
+                maintenanceSyncLog.innerHTML = `<div style="color: var(--danger);">Critical Error: ${error.message}</div>`;
+            } finally {
+                maintenanceSyncAllBtn.disabled = false;
+                maintenanceSyncAllBtn.textContent = 'Sync All Project Versions';
+            }
+        });
+    }
+
+    // Maintenance: Sync Single Project
+    const detailsModalSyncBtn = document.getElementById('details-modal-sync-btn');
+    if (detailsModalSyncBtn) {
+        detailsModalSyncBtn.addEventListener('click', async () => {
+            const projectPath = document.getElementById('project-details-modal').dataset.currentProject;
+            if (!projectPath) return;
+            
+            detailsModalSyncBtn.disabled = true;
+            detailsModalSyncBtn.textContent = 'Syncing...';
+            
+            try {
+                const response = await fetch('/api/maintenance/sync-version', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json', 
+                        'X-CSRF-TOKEN': getCsrfToken() 
+                    },
+                    body: JSON.stringify({ path: projectPath })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message);
+                    document.getElementById('details-production-version').textContent = result.data.version;
+                    loadProjects(); // reload in background
+                } else {
+                    showToast(result.error || 'Failed to sync version.', 'error');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                detailsModalSyncBtn.disabled = false;
+                detailsModalSyncBtn.textContent = 'Sync Version';
+            }
+        });
+    }
+
+    // Maintenance Subtabs
+    const maintenanceSubtabs = document.querySelectorAll('#maintenance-view .tab-button[data-subtab]');
+    maintenanceSubtabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            maintenanceSubtabs.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+
+            const subtabId = btn.getAttribute('data-subtab');
+            document.getElementById('maintenance-tab-version-sync').style.display = subtabId === 'version-sync' ? 'block' : 'none';
+            document.getElementById('maintenance-tab-entry-points').style.display = subtabId === 'entry-points' ? 'block' : 'none';
+        });
+    });
+
+    // Maintenance: Test Entry Points
+    const maintenanceTestEntryBtn = document.getElementById('maintenance-test-entry-btn');
+    const maintenanceTestLog = document.getElementById('maintenance-test-log');
+    
+    if (maintenanceTestEntryBtn) {
+        maintenanceTestEntryBtn.addEventListener('click', async () => {
+            maintenanceTestEntryBtn.disabled = true;
+            maintenanceTestEntryBtn.textContent = 'Testing Entry Points...';
+            maintenanceTestLog.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 2rem;">
+                <jl-meter value="50" max="100" style="margin-bottom:1rem;"></jl-meter>
+                <div style="color:var(--text-muted);">Pinging project URLs. This may take a few moments...</div>
+            </div>`;
+            
+            try {
+                const response = await fetch('/api/maintenance/test-entry-points', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json', 
+                        'X-CSRF-TOKEN': getCsrfToken() 
+                    }
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    maintenanceTestLog.innerHTML = `<div class="markdown-table-wrapper" style="width:100%; overflow-x:auto;">${result.html}</div>`;
+                    // Basic styling for the returned markdown table
+                    const tables = maintenanceTestLog.querySelectorAll('table');
+                    tables.forEach(table => {
+                        table.style.width = '100%';
+                        table.style.borderCollapse = 'collapse';
+                        table.querySelectorAll('th, td').forEach(cell => {
+                            cell.style.padding = '0.75rem';
+                            cell.style.borderBottom = '1px solid var(--border)';
+                            cell.style.textAlign = 'left';
+                        });
+                        table.querySelectorAll('th').forEach(th => {
+                            th.style.backgroundColor = 'rgba(0,0,0,0.2)';
+                        });
+                    });
+                } else {
+                    maintenanceTestLog.innerHTML = `<div style="color: var(--danger);">Failed to run tests: ${result.error || 'Unknown Error'}</div>`;
+                }
+            } catch (error) {
+                maintenanceTestLog.innerHTML = `<div style="color: var(--danger);">Critical Error: ${error.message}</div>`;
+            } finally {
+                maintenanceTestEntryBtn.disabled = false;
+                maintenanceTestEntryBtn.textContent = 'Test Entry Points';
+            }
         });
     }
 

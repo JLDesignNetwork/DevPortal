@@ -20,6 +20,15 @@ describe('GET /api/settings', function (): void {
                 'splash_recent_count' => 5,
                 'splash_active_count' => 5,
                 'domain_extension' => 'test',
+                'default_sort' => 'date-desc',
+                'sync_exclude_categories' => ['Sandbox'],
+                'sync_exclude_projects' => [],
+                'sync_include_categories' => [],
+                'sync_include_projects' => [],
+                'entry_exclude_categories' => ['Archive'],
+                'entry_exclude_projects' => [],
+                'entry_include_categories' => [],
+                'entry_include_projects' => [],
             ]);
     });
 });
@@ -36,6 +45,15 @@ describe('POST /api/settings', function (): void {
             'splash_recent_count' => 10,
             'splash_active_count' => 8,
             'domain_extension' => 'local',
+            'default_sort' => 'alpha-asc',
+            'sync_exclude_categories' => [],
+            'sync_exclude_projects' => [],
+            'sync_include_categories' => [],
+            'sync_include_projects' => [],
+            'entry_exclude_categories' => [],
+            'entry_exclude_projects' => [],
+            'entry_include_categories' => [],
+            'entry_include_projects' => [],
         ]);
 
         $response->assertStatus(200)
@@ -51,7 +69,8 @@ describe('POST /api/settings', function (): void {
             ->and($settingsService->getAllowlistedPaths())->toBe($validPaths)
             ->and($settingsService->getSplashRecentCount())->toBe(10)
             ->and($settingsService->getSplashActiveCount())->toBe(8)
-            ->and($settingsService->getDomainExtension())->toBe('local');
+            ->and($settingsService->getDomainExtension())->toBe('local')
+            ->and($settingsService->getDefaultSort())->toBe('alpha-asc');
     });
 
     it('returns 422 if allowlisted path does not exist on disk', function (): void {
@@ -64,6 +83,15 @@ describe('POST /api/settings', function (): void {
             'splash_recent_count' => 5,
             'splash_active_count' => 5,
             'domain_extension' => 'test',
+            'default_sort' => 'date-desc',
+            'sync_exclude_categories' => [],
+            'sync_exclude_projects' => [],
+            'sync_include_categories' => [],
+            'sync_include_projects' => [],
+            'entry_exclude_categories' => [],
+            'entry_exclude_projects' => [],
+            'entry_include_categories' => [],
+            'entry_include_projects' => [],
         ]);
 
         $response->assertStatus(422)

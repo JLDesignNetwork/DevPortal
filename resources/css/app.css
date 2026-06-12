@@ -1,3 +1,7 @@
+/**
+ * @since 1.2.0
+ * @version 1.2.0
+ */
 /* Premium Dev Portal Design System using Native CSS */
 
 :root {
@@ -699,6 +703,16 @@ header {
 }
 
 /* Premium Form Elements */
+.form-group-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.form-group-row > .form-group {
+    flex: 1;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -1316,4 +1330,31 @@ header {
     background-color: var(--primary-alpha);
     color: var(--primary);
     border: 1px solid hsla(var(--hue), 90%, 55%, 0.15);
+}
+
+/* Settings Sidebar Nav */
+.settings-nav-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.settings-nav-btn:hover {
+    color: var(--text-main);
+    background: var(--bg-card);
+}
+
+.settings-nav-btn.active {
+    color: var(--primary);
+    border-left-color: var(--primary);
+    background: var(--bg-card);
 }

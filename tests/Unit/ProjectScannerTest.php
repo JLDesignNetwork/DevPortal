@@ -80,6 +80,16 @@ test('parses project name from README first heading', function (): void {
     expect($result[0]['name'])->toBe('Chirper App');
 });
 
+test('ignores generic section headings like Features as project name', function (): void {
+    mkdir($this->tmpDir.'/Active/gemini-chat-nuke-ff');
+    file_put_contents($this->tmpDir.'/Active/gemini-chat-nuke-ff/README.md', "## ✨ Features\n\nSome great features.");
+
+    $result = new ProjectScanner()->scan([$this->tmpDir]);
+
+    // Should fall back to the title-cased folder name
+    expect($result[0]['name'])->toBe('Gemini Chat Nuke Ff');
+});
+
 test('parses description from README first paragraph', function (): void {
     mkdir($this->tmpDir.'/Active/chirper');
     file_put_contents($this->tmpDir.'/Active/chirper/README.md', "# Chirper App\n\nA microblogging platform.");

@@ -1,6 +1,19 @@
 # Dev Portal
 
+![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-777BB4?style=flat-square&logo=php)
+![Laravel Version](https://img.shields.io/badge/Laravel-13.8%2B-FF2D20?style=flat-square&logo=laravel)
+![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)
+![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg?style=flat-square)
+
 Dev Portal is a local developer dashboard built with Laravel, Vanilla CSS, and modern JavaScript. It allows developers to browse, search, configure, and manage local development directories (projects) across multiple watch locations and categories on their machine.
+
+## Table of Contents
+- [Key Features](#key-features)
+- [Configuration & Usage](#configuration--usage)
+- [Technology Stack](#technology-stack)
+- [Setup Instructions](#setup-instructions)
+- [Testing](#testing)
+- [License](#license)
 
 ---
 

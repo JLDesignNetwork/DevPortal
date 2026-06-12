@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @since 1.2.0
+ *
+ * @version 1.2.0
+ */
+
 declare(strict_types=1);
 
 namespace App\Http\Controllers;
@@ -28,6 +34,15 @@ class SettingsController extends Controller
             'splash_recent_count' => $this->settingsService->getSplashRecentCount(),
             'splash_active_count' => $this->settingsService->getSplashActiveCount(),
             'domain_extension' => $this->settingsService->getDomainExtension(),
+            'default_sort' => $this->settingsService->getDefaultSort(),
+            'sync_exclude_categories' => $this->settingsService->getArray('sync_exclude_categories', ['Sandbox']),
+            'sync_exclude_projects' => $this->settingsService->getArray('sync_exclude_projects', []),
+            'sync_include_categories' => $this->settingsService->getArray('sync_include_categories', []),
+            'sync_include_projects' => $this->settingsService->getArray('sync_include_projects', []),
+            'entry_exclude_categories' => $this->settingsService->getArray('entry_exclude_categories', ['Archive']),
+            'entry_exclude_projects' => $this->settingsService->getArray('entry_exclude_projects', []),
+            'entry_include_categories' => $this->settingsService->getArray('entry_include_categories', []),
+            'entry_include_projects' => $this->settingsService->getArray('entry_include_projects', []),
         ]);
     }
 
@@ -39,11 +54,20 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'cache_enabled' => ['required', 'boolean'],
             'cache_ttl' => ['required', 'integer', 'min:0'],
-            'allowlisted_paths' => ['required', 'array'],
+            'allowlisted_paths' => ['present', 'array'],
             'allowlisted_paths.*' => ['required', 'string'],
             'splash_recent_count' => ['required', 'integer', 'min:1'],
             'splash_active_count' => ['required', 'integer', 'min:1'],
             'domain_extension' => ['required', 'string', 'regex:/^[a-zA-Z0-9\.-]+$/'],
+            'default_sort' => ['required', 'string', 'in:date-desc,date-asc,created-desc,created-asc,alpha-asc,alpha-desc'],
+            'sync_exclude_categories' => ['present', 'array'],
+            'sync_exclude_projects' => ['present', 'array'],
+            'sync_include_categories' => ['present', 'array'],
+            'sync_include_projects' => ['present', 'array'],
+            'entry_exclude_categories' => ['present', 'array'],
+            'entry_exclude_projects' => ['present', 'array'],
+            'entry_include_categories' => ['present', 'array'],
+            'entry_include_projects' => ['present', 'array'],
         ]);
 
         // Validate that all custom folders exist on disk
@@ -56,12 +80,46 @@ class SettingsController extends Controller
             }
         }
 
+        // Validate intersection
+        $checkIntersections = [
+            ['Version Sync Categories', $validated['sync_exclude_categories'], $validated['sync_include_categories']],
+            ['Version Sync Projects', $validated['sync_exclude_projects'], $validated['sync_include_projects']],
+            ['Entry Point Test Categories', $validated['entry_exclude_categories'], $validated['entry_include_categories']],
+            ['Entry Point Test Projects', $validated['entry_exclude_projects'], $validated['entry_include_projects']],
+        ];
+
+        foreach ($checkIntersections as [$name, $exclude, $include]) {
+            $intersection = array_intersect(
+                array_map('strtolower', $exclude),
+                array_map('strtolower', $include)
+            );
+            if (! empty($intersection)) {
+                $conflict = implode(', ', array_intersect($exclude, $include) ?: $intersection);
+
+                return response()->json([
+                    'success' => false,
+                    'error' => "Conflict in {$name}: '{$conflict}' cannot be in both the Blacklist and Whitelist. Please choose one.",
+                ], 422);
+            }
+        }
+
         $this->settingsService->set('cache_enabled', $validated['cache_enabled']);
         $this->settingsService->set('cache_ttl', $validated['cache_ttl']);
         $this->settingsService->set('allowlisted_paths', $validated['allowlisted_paths']);
         $this->settingsService->set('splash_recent_count', $validated['splash_recent_count']);
         $this->settingsService->set('splash_active_count', $validated['splash_active_count']);
         $this->settingsService->set('domain_extension', $validated['domain_extension']);
+        $this->settingsService->set('default_sort', $validated['default_sort']);
+
+        $this->settingsService->set('sync_exclude_categories', $validated['sync_exclude_categories']);
+        $this->settingsService->set('sync_exclude_projects', $validated['sync_exclude_projects']);
+        $this->settingsService->set('sync_include_categories', $validated['sync_include_categories']);
+        $this->settingsService->set('sync_include_projects', $validated['sync_include_projects']);
+
+        $this->settingsService->set('entry_exclude_categories', $validated['entry_exclude_categories']);
+        $this->settingsService->set('entry_exclude_projects', $validated['entry_exclude_projects']);
+        $this->settingsService->set('entry_include_categories', $validated['entry_include_categories']);
+        $this->settingsService->set('entry_include_projects', $validated['entry_include_projects']);
 
         // Clear project listing cache on settings update to reflect changes immediately
         Cache::forget('devportal.projects');

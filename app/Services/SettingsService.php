@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @since 1.2.0
+ *
+ * @version 1.2.0
+ */
+
 declare(strict_types=1);
 
 namespace App\Services;
@@ -100,5 +106,36 @@ class SettingsService
         $val = $this->get('domain_extension');
 
         return $val !== null ? (string) $val : 'test';
+    }
+
+    /**
+     * Get the default sort mode.
+     */
+    public function getDefaultSort(): string
+    {
+        $val = $this->get('default_sort');
+
+        return $val !== null ? (string) $val : 'date-desc';
+    }
+
+    /**
+     * Get a setting value as an array.
+     *
+     * @param  array<int, string>  $default
+     * @return array<int, string>
+     */
+    public function getArray(string $key, array $default = []): array
+    {
+        $val = $this->get($key);
+        if ($val === null) {
+            return $default;
+        }
+
+        $decoded = json_decode((string) $val, true);
+        if (! is_array($decoded)) {
+            return $default;
+        }
+
+        return $decoded;
     }
 }
