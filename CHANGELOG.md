@@ -5,6 +5,11 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] — 2026-06-12
+
+### Security
+- **Dependabot Critical Fix**: Added a `pnpm.overrides` instruction in `package.json` to force the resolution of `shell-quote` to `^1.8.4` due to a critical vulnerability in `concurrently`'s dependency tree (GHSA-w7jw-789q-3m8p).
+
 ## [1.2.1] — 2026-06-12
 
 ### Changed
