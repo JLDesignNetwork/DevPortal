@@ -1,6 +1,6 @@
 /**
  * @since 2605.3.0-bs
- * @version 2608.1.1-bs
+ * @version 2605.4.1-bs
  */
 export class JLMeter extends HTMLElement {
   constructor() {

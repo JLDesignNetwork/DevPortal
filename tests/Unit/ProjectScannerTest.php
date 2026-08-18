@@ -327,7 +327,7 @@ test('parses GVS version tags from README badges and CHANGELOG', function (): vo
     $readmeContent = <<<'README'
 # GVS Project
 
-[![GVS](https://img.shields.io/badge/GVS-2608.1.1--bs-purple?style=flat-square)](https://github.com/JLDesignNetwork)
+[![GVS](https://img.shields.io/badge/GVS-2605.4.1--bs-purple?style=flat-square)](https://github.com/JLDesignNetwork)
 
 A project adhering to GVS.
 README;
@@ -336,7 +336,7 @@ README;
     $changelogContent = <<<'CHANGELOG'
 # Changelog
 
-## [2608.1.1-bs] - 2026-08-18
+## [2605.4.1-bs] - 2026-08-18
 
 ### Changed
 - GVS standardized release.
@@ -345,8 +345,8 @@ CHANGELOG;
 
     $result = new ProjectScanner()->scan([$this->tmpDir]);
 
-    expect($result[0]['version'])->toBe('2608.1.1-bs')
-        ->and($result[0]['changelog_version'])->toBe('2608.1.1-bs')
+    expect($result[0]['version'])->toBe('2605.4.1-bs')
+        ->and($result[0]['changelog_version'])->toBe('2605.4.1-bs')
         ->and($result[0]['changelog_date'])->toBe('2026-08-18')
-        ->and($result[0]['production_version'])->toBe('2608.1.1-bs');
+        ->and($result[0]['production_version'])->toBe('2605.4.1-bs');
 });

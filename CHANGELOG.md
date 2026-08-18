@@ -5,16 +5,16 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to the [JLDN Generational Versioning Schema (GVS)](https://github.com/JLDesignNetwork).
 
-## [2608.1.1-bs] - 2026-08-18
+## [2605.4.1-bs] - 2026-08-18
 
 ### Changed
 - **Tooling & Dependency Group Updates**: Integrated Dependabot group PR #8 (`concurrently: ^10.0.5`) and PR #9 (`fakerphp/faker`, `laravel/pail`, `laravel/pao`, `laravel/pint`, `mockery/mockery`, `pestphp/pest-plugin-laravel`, `rector/rector`).
 - **Composer Runtime Hardening**: Suppressed obsolete `pestphp/pest-plugin` autoload injection in `composer.json` allow-plugins.
 
-## [2608.1.0-bs] - 2026-08-18
+## [2605.4.0-bs] - 2026-08-18
 
 ### Added
-- **Generational Development Hub**: Scaffolded root `.dev/` tree containing multi-generational `ROADMAP.md`, `backlog.json`, `2608/backlog.json`, and `2608/ideas.json`.
+- **Generational Development Hub**: Scaffolded root `.dev/` tree containing multi-generational `ROADMAP.md`, `backlog.json`, `2605/backlog.json`, and `2605/ideas.json`.
 - **Security Boundaries**: Scaffolded `.aiexclude` (hard token boundary) and `.aiignore` (token hygiene).
 - **Dependabot CI Configuration**: Implemented `.github/dependabot.yml` for automated grouped weekly security audits.
 
@@ -23,16 +23,16 @@ and this project adheres to the [JLDN Generational Versioning Schema (GVS)](http
 - **NPM / PNPM Vulnerabilities**: Upgraded `vite` to `8.2.1`, `laravel-vite-plugin` to `3.2.0`, and resolved `postcss >= 8.5.23` and `shell-quote >= 1.8.4` overrides, eliminating all 7 JS security advisories.
 - **Global Scripting Compliance**: Replaced prohibited `npx` script with `pnpm dlx only-allow pnpm` in `package.json`.
 
-## [2606.1.1-bs] - 2026-06-12
+## [2605.3.2-bs] - 2026-06-12
 
 ### Security
 - **Dependabot Critical Fix**: Added a `pnpm.overrides` instruction in `package.json` to force the resolution of `shell-quote` to `^1.8.4` due to a critical vulnerability in `concurrently`'s dependency tree (GHSA-w7jw-789q-3m8p).
 
-## [2606.1.0-bs] - 2026-06-12
+## [2605.3.1-bs] - 2026-06-12
 
 ### Changed
 - **Housekeeping & Standardization**: Enforced rigorous compliance with the `GOLD_STANDARD.md` and `ANTIGRAVITY.md` blueprints.
-- **File-Level Versioning**: Injected `@since 2605.3.0-bs` and `@version 2606.1.0-bs` tracking tags across all core PHP, JS, and CSS files.
+- **File-Level Versioning**: Injected `@since 2605.3.0-bs` and `@version 2605.3.1-bs` tracking tags across all core PHP, JS, and CSS files.
 - **README Standardization**: Rebuilt the README structure to feature Shields.io technology badges and an auto-linked Table of Contents.
 - **Composer Metadata**: Updated `composer.json` name to `jldn/devportal` and refined description keywords to reflect its local dashboard purpose.
 

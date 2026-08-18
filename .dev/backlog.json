@@ -6,7 +6,7 @@
     "priority": "critical-1",
     "details": "Scaffolded .dev/ hub, backlog.json, ideas.json, .aiexclude, .aiignore, and .github/dependabot.yml.",
     "created_at": "2026-08-18T12:00:00+02:00",
-    "existed_since": "2608.1.0-bs"
+    "existed_since": "2605.4.0-bs"
   },
   {
     "id": "PROJ-ISSUE-01",
@@ -16,7 +16,7 @@
     "severity": "high",
     "details": "Upgraded guzzlehttp/guzzle to 7.15.2, guzzlehttp/psr7 to 2.13.0, and league/commonmark to 2.9.0; verified 0 advisories via composer audit.",
     "created_at": "2026-08-18T12:00:00+02:00",
-    "existed_since": "2608.1.0-bs"
+    "existed_since": "2605.4.0-bs"
   },
   {
     "id": "PROJ-TODO-02",
@@ -25,7 +25,7 @@
     "priority": "high-1",
     "details": "Replaced forbidden npx with pnpm dlx in package.json and injected official JLDN Buy Me A Coffee badge and GVS badge to README.md.",
     "created_at": "2026-08-18T12:00:00+02:00",
-    "existed_since": "2608.1.0-bs"
+    "existed_since": "2605.4.0-bs"
   },
   {
     "id": "PROJ-TODO-03",
@@ -34,7 +34,7 @@
     "priority": "high-2",
     "details": "Closed stale Dependabot PRs #1, #5, #6, and #7 with audit resolution notes linked to GVS 2608.1.0-bs.",
     "created_at": "2026-08-18T12:00:00+02:00",
-    "existed_since": "2608.1.0-bs"
+    "existed_since": "2605.4.0-bs"
   },
   {
     "id": "PROJ-TODO-04",
@@ -43,7 +43,7 @@
     "priority": "medium-1",
     "details": "Ran Pint code formatter, Pest test suite (100% pass), Vite production build (578ms), and confirmed 0-defect state.",
     "created_at": "2026-08-18T12:00:00+02:00",
-    "existed_since": "2608.1.0-bs"
+    "existed_since": "2605.4.0-bs"
   },
   {
     "id": "PROJ-TODO-05",
@@ -52,6 +52,6 @@
     "priority": "medium-2",
     "details": "Upgraded concurrently to 10.0.5 and Composer dev packages to latest releases; verified with Pest test suite (100% pass) and closed PRs #8 and #9.",
     "created_at": "2026-08-18T12:14:00+02:00",
-    "existed_since": "2608.1.1-bs"
+    "existed_since": "2605.4.1-bs"
   }
 ]
