@@ -1,6 +1,6 @@
 /**
- * @since 1.2.0
- * @version 1.2.0
+ * @since 2605.1.0-bs
+ * @version 2608.1.1-bs
  */
 import { JLMeter } from './components/meter.js';
 

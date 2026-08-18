@@ -321,3 +321,32 @@ CHANGELOG;
         ->and($result[0]['changelog_date'])->toBe('2026-05-22')
         ->and($result[0]['changelog_content'])->toContain('Fixed production relation backups');
 });
+
+test('parses GVS version tags from README badges and CHANGELOG', function (): void {
+    mkdir($this->tmpDir.'/Active/gvs-project');
+    $readmeContent = <<<'README'
+# GVS Project
+
+[![GVS](https://img.shields.io/badge/GVS-2608.1.1--bs-purple?style=flat-square)](https://github.com/JLDesignNetwork)
+
+A project adhering to GVS.
+README;
+    file_put_contents($this->tmpDir.'/Active/gvs-project/README.md', $readmeContent);
+
+    $changelogContent = <<<'CHANGELOG'
+# Changelog
+
+## [2608.1.1-bs] - 2026-08-18
+
+### Changed
+- GVS standardized release.
+CHANGELOG;
+    file_put_contents($this->tmpDir.'/Active/gvs-project/CHANGELOG.md', $changelogContent);
+
+    $result = new ProjectScanner()->scan([$this->tmpDir]);
+
+    expect($result[0]['version'])->toBe('2608.1.1-bs')
+        ->and($result[0]['changelog_version'])->toBe('2608.1.1-bs')
+        ->and($result[0]['changelog_date'])->toBe('2026-08-18')
+        ->and($result[0]['production_version'])->toBe('2608.1.1-bs');
+});

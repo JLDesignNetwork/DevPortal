@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @since 1.2.0
+ * @since 2605.1.0-bs
  *
- * @version 1.2.0
+ * @version 2608.1.1-bs
  */
 
 declare(strict_types=1);
@@ -178,7 +178,9 @@ class ProjectScanner
         }
 
         // Get version
-        if (preg_match('/(?:Version|v)\s*(\d+\.\d+\.\d+)/i', $content, $matches)) {
+        if (preg_match('/img\.shields\.io\/badge\/GVS-([^-\?]+(?:--[^\-?]+)?)-[a-zA-Z0-9]+/i', $content, $matches)) {
+            $projectVersion = str_replace('--', '-', $matches[1]);
+        } elseif (preg_match('/(?:Version|v)\s*(\d{4}\.\d+\.\d+-[a-zA-Z0-9]+|\d+\.\d+\.\d+)/i', $content, $matches)) {
             $projectVersion = $matches[1];
         } elseif (preg_match('/img\.shields\.io\/packagist\/v\/[^\/]+\/[^\/]+(?:\?label=)?(v?\d+\.\d+(?:\.\d+)?)/i', $content, $matches)) {
             $projectVersion = $matches[1];
@@ -260,7 +262,7 @@ class ProjectScanner
                 }
 
                 $versionStr = trim(substr($trimmed, 3));
-                if (preg_match('/^\[?(\d+\.\d+(?:\.\d+)?)\]?\s*(?:-|\—|\–|\s)+\s*(\d{4}-\d{2}-\d{2})/u', $versionStr, $matches)) {
+                if (preg_match('/^\[?(\d{4}\.\d+\.\d+-[a-zA-Z0-9]+|\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9.]+)?)\]?\s*(?:-|\—|\–|\s)+\s*(\d{4}-\d{2}-\d{2})/u', $versionStr, $matches)) {
                     $version = $matches[1];
                     $date = $matches[2];
                     $sectionFound = true;

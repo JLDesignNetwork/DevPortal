@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @since 1.2.0
+ * @since 2605.3.0-bs
  *
- * @version 1.2.0
+ * @version 2608.1.1-bs
  */
 
 declare(strict_types=1);
