@@ -14,4 +14,4 @@ Examples of behavior that contributes to a positive environment:
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to community leaders at `contact@jldn.dev`.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to community leaders at `jldesignnetwork@icloud.com`.
