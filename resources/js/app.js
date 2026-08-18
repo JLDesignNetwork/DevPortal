@@ -96,7 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return meta ? meta.getAttribute('content') : '';
     };
 
-    // Show toast message
+    // Contextual HTML escaping helper
+    const escapeHtml = (str) => {
+        if (typeof str !== 'string') return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+    // Show toast message safely
     const showToast = (message, type = 'success') => {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -109,10 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3" /></svg>`
             : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
 
-        toast.innerHTML = `
-            ${iconSvg}
-            <span>${message}</span>
-        `;
+        toast.innerHTML = iconSvg;
+        const textSpan = document.createElement('span');
+        textSpan.textContent = String(message || '');
+        toast.appendChild(textSpan);
 
         container.appendChild(toast);
 
@@ -1147,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 logDetails.innerHTML = logHtml;
                 loadProjects();
             } catch (error) {
-                maintenanceSyncLog.innerHTML = `<div style="color: var(--danger);">Critical Error: ${error.message}</div>`;
+                maintenanceSyncLog.innerHTML = `<div style="color: var(--danger);">Critical Error: ${escapeHtml(error.message || 'Unknown Error')}</div>`;
             } finally {
                 maintenanceSyncAllBtn.disabled = false;
                 maintenanceSyncAllBtn.textContent = 'Sync All Project Versions';
@@ -1252,10 +1263,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     });
                 } else {
-                    maintenanceTestLog.innerHTML = `<div style="color: var(--danger);">Failed to run tests: ${result.error || 'Unknown Error'}</div>`;
+                    maintenanceTestLog.innerHTML = `<div style="color: var(--danger);">Failed to run tests: ${escapeHtml(result.error || 'Unknown Error')}</div>`;
                 }
             } catch (error) {
-                maintenanceTestLog.innerHTML = `<div style="color: var(--danger);">Critical Error: ${error.message}</div>`;
+                maintenanceTestLog.innerHTML = `<div style="color: var(--danger);">Critical Error: ${escapeHtml(error.message || 'Unknown Error')}</div>`;
             } finally {
                 maintenanceTestEntryBtn.disabled = false;
                 maintenanceTestEntryBtn.textContent = 'Test Entry Points';
