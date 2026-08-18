@@ -146,7 +146,7 @@ class SyncProjectVersion
 
             $pattern = '/((?:\*|\/\/)\s*@?version\s*:?\s*)(v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9.]+)?)/i';
 
-            $newContent = preg_replace_callback($pattern, function ($matches) use ($cleanVersion): string {
+            $newContent = preg_replace_callback($pattern, function (array $matches) use ($cleanVersion): string {
                 $hasV = stripos($matches[2], 'v') === 0;
                 $replacementVersion = $hasV ? 'v'.$cleanVersion : $cleanVersion;
 
