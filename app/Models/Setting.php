@@ -17,7 +17,6 @@ class Setting extends Model
     /**
      * @var array<int, string>
      */
-    #[\Override]
     protected $fillable = [
         'key',
         'value',
