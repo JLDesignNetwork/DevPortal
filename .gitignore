@@ -26,16 +26,13 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Agent & Local Environment
+# Agent & Scratch Environment
 .env.*
 ._*
-.agents/
-.antigravitycli/
+.agents/scratch/*
+!.agents/scratch/.gitkeep
 
 # Local Project Development Folders
 /Active/
 /Production/
 /justafolder/
-
-# Scratch Files
-/.scratches/

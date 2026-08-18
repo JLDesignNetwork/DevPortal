@@ -72,5 +72,14 @@
     "details": "Upgraded concurrently to 10.0.5 and Composer dev packages to latest releases; verified with Pest test suite (100% pass) and closed PRs #8 and #9.",
     "created_at": "2026-08-18T12:14:00+02:00",
     "existed_since": "2605.4.1-bs"
+  },
+  {
+    "id": "PROJ-TODO-06",
+    "title": "Enforce Full Directory Structure & Baseline Scaffolding Compliance",
+    "status": "completed",
+    "priority": "high-1",
+    "details": "Scaffolded .mcp.json, initialized .agents/scratch/, purged legacy .scratches/ and .antigravitycli/, removed redundant rules, and cleaned standalone monorepo files.",
+    "created_at": "2026-08-18T14:50:00+02:00",
+    "existed_since": "2605.4.2-bs"
   }
 ]

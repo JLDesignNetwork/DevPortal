@@ -1,6 +1,6 @@
 # Dev Portal
 
-[![GVS](https://img.shields.io/badge/GVS-2605.4.1--bs-purple?style=flat-square)](https://github.com/JLDesignNetwork/DevPortal)
+[![GVS](https://img.shields.io/badge/GVS-2605.4.2--bs-purple?style=flat-square)](https://github.com/JLDesignNetwork/DevPortal)
 ![PHP Version](https://img.shields.io/badge/PHP-8.5%2B-777BB4?style=flat-square&logo=php)
 ![Laravel Version](https://img.shields.io/badge/Laravel-13.8%2B-FF2D20?style=flat-square&logo=laravel)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)

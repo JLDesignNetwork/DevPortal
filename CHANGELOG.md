@@ -5,6 +5,15 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to the [JLDN Generational Versioning Schema (GVS)](https://github.com/JLDesignNetwork).
 
+## [2605.4.2-bs] - 2026-08-18
+
+### Added
+- **MCP Server Manifest**: Scaffolded `.mcp.json` configured with `laravel-boost` and `herd` MCP servers per Global Rule 13.3.
+- **Universal Scratch Space**: Initialized `.agents/scratch/` workspace lifecycle directory.
+
+### Removed
+- **Legacy Artifacts & Redundancy**: Purged dead `/.antigravitycli/` directory and dangling symlink, removed legacy `/.scratches/` root folder, consolidated standalone `pnpm-workspace.yaml`, and cleaned redundant `.agents/rules/laravel-standards.md`.
+
 ## [2605.4.1-bs] - 2026-08-18
 
 ### Changed
