@@ -53,6 +53,9 @@ jobs:
       - name: Build Frontend Assets
         run: pnpm run build
 
+      - name: Prepare Test Environment
+        run: cp -n .env.example .env || true
+
       - name: Run Pint Linting Check
         run: ./vendor/bin/pint --test
 
