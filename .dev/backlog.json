@@ -71,5 +71,14 @@
     "details": "Enforced complete defensive ignore patterns in .gitignore, configured bootstrap/cache exclusion in rector.php, applied modern PHP 8.4 transforms, and verified Pest test suite (100% pass).",
     "created_at": "2026-08-18T15:28:00+02:00",
     "existed_since": "2605.4.2-bs"
+  },
+  {
+    "id": "PROJ-TODO-08",
+    "title": "Implement In-Repo Docs Wiki and GitHub Repository Governance Suite",
+    "status": "completed",
+    "priority": "high-1",
+    "details": "Scaffolded in-repo docs wiki (index.md, architecture.md, usage.md), .github community templates (FUNDING, SECURITY, CONTRIBUTING, CODE_OF_CONDUCT, PR template, issue templates), and automated CI/CD workflows (ci.yml, codeql.yml).",
+    "created_at": "2026-08-18T16:05:00+02:00",
+    "existed_since": "2605.4.3-bs"
   }
 ]

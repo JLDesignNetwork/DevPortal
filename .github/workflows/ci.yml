@@ -1,0 +1,65 @@
+name: "CI Quality Gate"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} Quality Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4']
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, sqlite3, curl, fileinfo
+          coverage: pcov
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install NPM Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Frontend Assets
+        run: pnpm run build
+
+      - name: Run Pint Linting Check
+        run: ./vendor/bin/pint --test
+
+      - name: Run Rector Static Analysis Dry-Run
+        run: ./vendor/bin/rector process --dry-run
+
+      - name: Run Pest Test Suite
+        run: ./vendor/bin/pest

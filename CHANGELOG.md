@@ -5,6 +5,13 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to the [JLDN Generational Versioning Schema (GVS)](https://github.com/JLDesignNetwork).
 
+## [2605.4.3-bs] - 2026-08-18
+
+### Added
+- **In-Repo Documentation Wiki (`docs/`)**: Initialized internal wiki hub containing `docs/index.md` (Table of Contents), `docs/architecture.md` (System Subsystems & Security Guards), and `docs/usage.md` (Operations & Workflows).
+- **GitHub Governance & Community Suite**: Scaffolded `.github/FUNDING.yml`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `.github/CODE_OF_CONDUCT.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/copilot-instructions.md`, and structured `.github/ISSUE_TEMPLATE/` forms (`bug_report.yml`, `feature_request.yml`, `config.yml`).
+- **Automated CI/CD Workflows**: Implemented `.github/workflows/ci.yml` (matrix Pest/Pint/Vite test runner with concurrency cancellation) and `.github/workflows/codeql.yml` (SAST security analysis).
+
 ## [2605.4.2-bs] - 2026-08-18
 
 ### Added
