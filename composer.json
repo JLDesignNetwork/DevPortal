@@ -6,7 +6,7 @@
     "keywords": ["laravel", "dashboard", "devportal", "manager"],
     "license": "MIT",
     "require": {
-        "php": "^8.5",
+        "php": "^8.4|^8.5",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0"
     },
