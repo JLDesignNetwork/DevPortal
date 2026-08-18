@@ -1,0 +1,8 @@
+[
+  {
+    "id": "PROJ-IDEA-01",
+    "status": "draft",
+    "details": "Evaluate integrating automated PR auto-merge action for trusted dependency bumps conforming to JLDN GVS tags.",
+    "resolution": null
+  }
+]

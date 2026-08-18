@@ -1,0 +1,12 @@
+# Hard Security Boundary
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+*.crt
+auth.json
+database/*.sqlite
+database/*.sqlite-journal
+storage/oauth-*.key

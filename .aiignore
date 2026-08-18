@@ -1,0 +1,11 @@
+# Token Hygiene & Artifact Boundaries
+vendor/
+node_modules/
+public/build/
+public/hot
+storage/framework/
+storage/logs/
+.agents/scratch/
+.phpunit.cache/
+coverage/
+.DS_Store

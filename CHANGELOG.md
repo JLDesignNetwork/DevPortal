@@ -5,6 +5,18 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [2608.1.0-bs] - 2026-08-18
+
+### Added
+- **Generational Development Hub**: Scaffolded root `.dev/` tree containing multi-generational `ROADMAP.md`, `backlog.json`, `2608/backlog.json`, and `2608/ideas.json`.
+- **Security Boundaries**: Scaffolded `.aiexclude` (hard token boundary) and `.aiignore` (token hygiene).
+- **Dependabot CI Configuration**: Implemented `.github/dependabot.yml` for automated grouped weekly security audits.
+
+### Fixed
+- **Composer Vulnerabilities**: Upgraded `guzzlehttp/guzzle` to `7.15.2`, `guzzlehttp/psr7` to `2.13.0`, and `league/commonmark` to `2.9.0`, resolving 17 security advisories (CVE-2026-71488, CVE-2026-69246, etc.).
+- **NPM / PNPM Vulnerabilities**: Upgraded `vite` to `8.2.1`, `laravel-vite-plugin` to `3.2.0`, and resolved `postcss >= 8.5.23` and `shell-quote >= 1.8.4` overrides, eliminating all 7 JS security advisories.
+- **Global Scripting Compliance**: Replaced prohibited `npx` script with `pnpm dlx only-allow pnpm` in `package.json`.
+
 ## [1.2.2] — 2026-06-12
 
 ### Security
