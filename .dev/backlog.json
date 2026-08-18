@@ -62,5 +62,14 @@
     "details": "Scaffolded .mcp.json, initialized .agents/scratch/, purged legacy .scratches/ and .antigravitycli/, removed redundant rules, and cleaned standalone monorepo files.",
     "created_at": "2026-08-18T14:50:00+02:00",
     "existed_since": "2605.4.2-bs"
+  },
+  {
+    "id": "PROJ-TODO-07",
+    "title": "Apply Defensive Gitignore and Rector Modernization Polish",
+    "status": "completed",
+    "priority": "medium-1",
+    "details": "Enforced complete defensive ignore patterns in .gitignore, configured bootstrap/cache exclusion in rector.php, applied modern PHP 8.4 transforms, and verified Pest test suite (100% pass).",
+    "created_at": "2026-08-18T15:28:00+02:00",
+    "existed_since": "2605.4.2-bs"
   }
 ]

@@ -12,6 +12,7 @@ namespace App\Actions;
 
 use App\Services\ProjectScanner;
 use App\Services\SettingsService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\File;
 
 class TestEntryPoints
@@ -30,10 +31,10 @@ class TestEntryPoints
         $projects = $this->scanner->scan($this->settingsService->getAllowlistedPaths());
         $domainExtension = $this->settingsService->get('domain_extension', 'test');
 
-        $excludeCats = array_map('strtolower', $this->settingsService->getArray('entry_exclude_categories', ['Archive']));
-        $excludeProjs = array_map('strtolower', $this->settingsService->getArray('entry_exclude_projects', []));
-        $includeCats = array_map('strtolower', $this->settingsService->getArray('entry_include_categories', []));
-        $includeProjs = array_map('strtolower', $this->settingsService->getArray('entry_include_projects', []));
+        $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('entry_exclude_categories', ['Archive']));
+        $excludeProjs = array_map(strtolower(...), $this->settingsService->getArray('entry_exclude_projects', []));
+        $includeCats = array_map(strtolower(...), $this->settingsService->getArray('entry_include_categories', []));
+        $includeProjs = array_map(strtolower(...), $this->settingsService->getArray('entry_include_projects', []));
 
         $results = [];
 
@@ -55,11 +56,11 @@ class TestEntryPoints
             }
             // 3. Determine default behavior for items not explicitly matched
             else {
-                $hasIncludeRules = ! empty($includeCats) || ! empty($includeProjs);
-                $hasExcludeRules = ! empty($excludeCats) || ! empty($excludeProjs);
+                $hasIncludeRules = $includeCats !== [] || $includeProjs !== [];
+                $hasExcludeRules = $excludeCats !== [] || $excludeProjs !== [];
 
                 // If they provided category whitelists, default to DENY for unmatched categories
-                if (! empty($includeCats)) {
+                if ($includeCats !== []) {
                     continue;
                 }
 
@@ -74,7 +75,7 @@ class TestEntryPoints
                 continue;
             }
 
-            $parts = explode('/', $project['relative_path']);
+            $parts = explode('/', (string) $project['relative_path']);
             $folderName = $parts[1] ?? null;
 
             if (! $folderName) {
@@ -97,12 +98,11 @@ class TestEntryPoints
             $content = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
-            curl_close($ch);
 
             $status = 'Pass';
             $errorMessage = '';
 
-            if ($curlError) {
+            if ($curlError !== '' && $curlError !== '0') {
                 $status = 'Fail';
                 $errorMessage = 'cURL Error: '.$curlError;
             } elseif ($httpCode >= 400) {
@@ -125,7 +125,7 @@ class TestEntryPoints
                     'Warning:' => 'PHP Warning',
                     'SQLSTATE[' => 'Database/SQL Error',
                     'Whoops! There was an error.' => 'Laravel Exception',
-                    'Illuminate\Database\QueryException' => 'Laravel Query Exception',
+                    QueryException::class => 'Laravel Query Exception',
                     'Uncaught Error:' => 'Uncaught PHP Error',
                     'Uncaught RuntimeException:' => 'Uncaught Runtime Exception',
                     'Ignition' => 'Laravel Ignition Error',
@@ -155,7 +155,7 @@ class TestEntryPoints
 
         $markdown = "# Project Entry Page Status\n\n";
 
-        if (empty($results)) {
+        if ($results === []) {
             $markdown .= "No projects found matching the criteria.\n";
         } else {
             foreach ($results as $category => $items) {

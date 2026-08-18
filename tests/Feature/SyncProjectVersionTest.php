@@ -7,7 +7,7 @@ use App\Services\ProjectScanner;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
 
-it('auto-generates changelog when git tag is higher than changelog version', function () {
+it('auto-generates changelog when git tag is higher than changelog version', function (): void {
     $baseDir = storage_path('framework/testing/sync_test_base');
     if (File::exists($baseDir)) {
         File::deleteDirectory($baseDir);
@@ -16,25 +16,25 @@ it('auto-generates changelog when git tag is higher than changelog version', fun
     $tempDir = $baseDir.'/Active/test_project';
 
     // Initialize git and configure user
-    (new Process(['git', 'init'], $tempDir))->run();
-    (new Process(['git', 'config', 'user.name', 'Test'], $tempDir))->run();
-    (new Process(['git', 'config', 'user.email', 'test@example.com'], $tempDir))->run();
+    new Process(['git', 'init'], $tempDir)->run();
+    new Process(['git', 'config', 'user.name', 'Test'], $tempDir)->run();
+    new Process(['git', 'config', 'user.email', 'test@example.com'], $tempDir)->run();
 
     // Create initial files
     File::put($tempDir.'/CHANGELOG.md', "# Changelog\n\n## [1.0.0] - 2026-01-01\n- Initial release\n");
     File::put($tempDir.'/package.json', json_encode(['version' => '1.0.0', 'name' => 'test']));
 
-    (new Process(['git', 'add', '.'], $tempDir))->run();
-    (new Process(['git', 'commit', '-m', 'Initial commit'], $tempDir))->run();
-    (new Process(['git', 'tag', 'v1.0.0'], $tempDir))->run();
+    new Process(['git', 'add', '.'], $tempDir)->run();
+    new Process(['git', 'commit', '-m', 'Initial commit'], $tempDir)->run();
+    new Process(['git', 'tag', 'v1.0.0'], $tempDir)->run();
 
     // Make new commits
     File::put($tempDir.'/test.txt', 'test');
-    (new Process(['git', 'add', 'test.txt'], $tempDir))->run();
-    (new Process(['git', 'commit', '-m', 'feat: added test file'], $tempDir))->run();
+    new Process(['git', 'add', 'test.txt'], $tempDir)->run();
+    new Process(['git', 'commit', '-m', 'feat: added test file'], $tempDir)->run();
 
     // Tag the new version (which is higher than the Changelog)
-    (new Process(['git', 'tag', 'v1.1.0'], $tempDir))->run();
+    new Process(['git', 'tag', 'v1.1.0'], $tempDir)->run();
 
     $action = new SyncProjectVersion(new ProjectScanner);
 

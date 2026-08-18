@@ -67,17 +67,17 @@ final class MaintenanceController extends Controller
         $successCount = 0;
         $failCount = 0;
 
-        $excludeCats = array_map('strtolower', $this->settingsService->getArray('sync_exclude_categories', ['Sandbox']));
-        $excludeProjs = array_map('strtolower', $this->settingsService->getArray('sync_exclude_projects', []));
-        $includeCats = array_map('strtolower', $this->settingsService->getArray('sync_include_categories', []));
-        $includeProjs = array_map('strtolower', $this->settingsService->getArray('sync_include_projects', []));
+        $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('sync_exclude_categories', ['Sandbox']));
+        $excludeProjs = array_map(strtolower(...), $this->settingsService->getArray('sync_exclude_projects', []));
+        $includeCats = array_map(strtolower(...), $this->settingsService->getArray('sync_include_categories', []));
+        $includeProjs = array_map(strtolower(...), $this->settingsService->getArray('sync_include_projects', []));
 
         foreach ($projects as $project) {
             $cat = strtolower($project['category'] ?? '');
             $name = strtolower($project['name'] ?? '');
 
             // 1. Check Include Lists (if set, must match)
-            if (! empty($includeCats) || ! empty($includeProjs)) {
+            if ($includeCats !== [] || $includeProjs !== []) {
                 $inCats = in_array($cat, $includeCats, true);
                 $inProjs = in_array($name, $includeProjs, true);
                 if (! $inCats && ! $inProjs) {

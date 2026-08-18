@@ -35,14 +35,8 @@ class SyncProjectVersion
         }
 
         // Use the scanner to determine the absolute highest version available
-        $scannedProjects = $this->scanner->scan([dirname(dirname($realPath))]);
-        $projectData = null;
-        foreach ($scannedProjects as $p) {
-            if ($p['path'] === $realPath) {
-                $projectData = $p;
-                break;
-            }
-        }
+        $scannedProjects = $this->scanner->scan([dirname($realPath, 2)]);
+        $projectData = array_find($scannedProjects, fn ($p): bool => $p['path'] === $realPath);
 
         if (! $projectData) {
             throw new InvalidArgumentException("Could not scan project directory: {$projectPath}");
@@ -53,9 +47,9 @@ class SyncProjectVersion
             throw new InvalidArgumentException("Could not determine a valid production version for {$projectPath}.");
         }
 
-        $cleanVersion = ltrim(trim($highestVersion), 'vV');
+        $cleanVersion = ltrim(trim((string) $highestVersion), 'vV');
         $oldChangelogVersion = $projectData['changelog_version'] ?? '0.0.0';
-        $oldCleanVersion = ltrim(trim($oldChangelogVersion), 'vV');
+        $oldCleanVersion = ltrim(trim((string) $oldChangelogVersion), 'vV');
 
         $updatedFiles = [];
         $changelogPath = $realPath.'/CHANGELOG.md';
@@ -152,7 +146,7 @@ class SyncProjectVersion
 
             $pattern = '/((?:\*|\/\/)\s*@?version\s*:?\s*)(v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9.]+)?)/i';
 
-            $newContent = preg_replace_callback($pattern, function ($matches) use ($cleanVersion) {
+            $newContent = preg_replace_callback($pattern, function ($matches) use ($cleanVersion): string {
                 $hasV = stripos($matches[2], 'v') === 0;
                 $replacementVersion = $hasV ? 'v'.$cleanVersion : $cleanVersion;
 
@@ -170,16 +164,16 @@ class SyncProjectVersion
         }
 
         // 6. Auto-commit and push if anything was updated
-        if (! empty($updatedFiles) && is_dir($realPath.'/.git')) {
+        if ($updatedFiles !== [] && is_dir($realPath.'/.git')) {
             $process = new Process(['git', 'status', '--porcelain'], $realPath);
             $process->run();
             if ($process->isSuccessful() && trim($process->getOutput()) !== '') {
-                (new Process(['git', 'add', '-A'], $realPath))->run();
+                new Process(['git', 'add', '-A'], $realPath)->run();
                 $commitMsg = "chore(release): sync version to v{$cleanVersion} [skip ci]";
-                (new Process(['git', 'commit', '-m', $commitMsg], $realPath))->run();
+                new Process(['git', 'commit', '-m', $commitMsg], $realPath)->run();
 
                 // Push quietly, ignoring failure if no upstream branch
-                (new Process(['git', 'push'], $realPath))->run();
+                new Process(['git', 'push'], $realPath)->run();
 
                 $updatedFiles[] = 'Git Commit & Push';
             }

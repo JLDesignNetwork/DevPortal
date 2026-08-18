@@ -35,7 +35,7 @@ class ProjectScanner
                 if (File::isDirectory($categoryPath)) {
                     try {
                         $projectDirs = File::directories($categoryPath);
-                    } catch (\UnexpectedValueException $e) {
+                    } catch (\UnexpectedValueException) {
                         continue;
                     }
 
@@ -142,13 +142,7 @@ class ProjectScanner
             'src/App.tsx',
         ];
 
-        foreach ($entryPoints as $entry) {
-            if (File::exists($path.'/'.$entry)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($entryPoints, fn ($entry) => File::exists($path.'/'.$entry));
     }
 
     private function toTitleCase(string $name): string
@@ -282,7 +276,7 @@ class ProjectScanner
 
                     // Simple Markdown replacement for bold and inline code
                     $lineText = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $lineText);
-                    $lineText = preg_replace('/`(.*?)`/', '<code>$1</code>', $lineText);
+                    $lineText = preg_replace('/`(.*?)`/', '<code>$1</code>', (string) $lineText);
 
                     $bulletPoints[] = $lineText;
                 }
@@ -409,7 +403,7 @@ class ProjectScanner
         $highestVersion = null;
         $highestCleanVersion = null;
 
-        foreach ($versions as $source => $rawVersion) {
+        foreach ($versions as $rawVersion) {
             $cleanVersion = ltrim(trim($rawVersion), 'vV');
 
             if ($highestCleanVersion === null || version_compare($cleanVersion, $highestCleanVersion, '>')) {

@@ -90,10 +90,10 @@ class SettingsController extends Controller
 
         foreach ($checkIntersections as [$name, $exclude, $include]) {
             $intersection = array_intersect(
-                array_map('strtolower', $exclude),
-                array_map('strtolower', $include)
+                array_map(strtolower(...), $exclude),
+                array_map(strtolower(...), $include)
             );
-            if (! empty($intersection)) {
+            if ($intersection !== []) {
                 $conflict = implode(', ', array_intersect($exclude, $include) ?: $intersection);
 
                 return response()->json([
