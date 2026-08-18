@@ -5,6 +5,12 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [2608.1.1-bs] - 2026-08-18
+
+### Changed
+- **Tooling & Dependency Group Updates**: Integrated Dependabot group PR #8 (`concurrently: ^10.0.5`) and PR #9 (`fakerphp/faker`, `laravel/pail`, `laravel/pao`, `laravel/pint`, `mockery/mockery`, `pestphp/pest-plugin-laravel`, `rector/rector`).
+- **Composer Runtime Hardening**: Suppressed obsolete `pestphp/pest-plugin` autoload injection in `composer.json` allow-plugins.
+
 ## [2608.1.0-bs] - 2026-08-18
 
 ### Added

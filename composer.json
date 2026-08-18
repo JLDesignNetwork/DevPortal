@@ -79,7 +79,7 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
+            "pestphp/pest-plugin": false,
             "php-http/discovery": true
         }
     },
