@@ -136,7 +136,7 @@ final class ProjectController extends Controller
         $basePath = dirname($categoryPath);
         $category = basename($categoryPath);
 
-        $allowedCategories = ['Active', 'Archive', 'Sandbox'];
+        $allowedCategories = $this->settingsService->getAllowedCategories();
         if (! in_array($category, $allowedCategories, true)) {
             return response()->json([
                 'success' => false,

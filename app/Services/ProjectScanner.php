@@ -16,6 +16,10 @@ use Symfony\Component\Process\Process;
 
 class ProjectScanner
 {
+    public function __construct(
+        private readonly SettingsService $settingsService,
+    ) {}
+
     /**
      * Scan the given base paths and return parsed project details.
      *
@@ -24,7 +28,7 @@ class ProjectScanner
      */
     public function scan(array $basePaths): array
     {
-        $categories = ['Active', 'Archive', 'Sandbox'];
+        $categories = $this->settingsService->getAllowedCategories();
         $allProjects = [];
         $processedPaths = [];
 
@@ -100,6 +104,9 @@ class ProjectScanner
                             'production_version' => $productionVersion,
                             'description' => $readmeData['description'],
                             'category' => $category,
+                            'type' => $this->resolveProjectType($projectPathStr, $dependencies),
+                            'platform_host' => $this->resolvePlatformHost($projectPathStr),
+                            'platform_visibility' => $this->resolvePlatformVisibility($projectPathStr),
                             'path' => $projectPathStr, // Absolute path for actions
                             'relative_path' => str_replace($basePath.'/', '', $projectPathStr),
                             'last_modified' => $lastModified,
@@ -143,6 +150,136 @@ class ProjectScanner
         ];
 
         return array_any($entryPoints, fn ($entry) => File::exists($path.'/'.$entry));
+    }
+
+    /**
+     * Parse the JLDN Metadata Frontmatter block from the primary project document.
+     * Reads README.md first, then falls back to any root-level .md file.
+     *
+     * @return array<string, mixed>
+     */
+    private function parseJldnFrontmatter(string $projectPath): array
+    {
+        $candidates = ['README.md'];
+
+        // Gather any other root-level .md files as fallbacks
+        try {
+            $mdFiles = glob($projectPath.'/*.md') ?: [];
+            foreach ($mdFiles as $file) {
+                $basename = basename($file);
+                if ($basename !== 'README.md' && ! in_array($basename, ['CHANGELOG.md', 'LICENSE.md', 'CONTRIBUTING.md', 'SECURITY.md'], true)) {
+                    $candidates[] = $basename;
+                }
+            }
+        } catch (\Throwable) {
+            // Ignore
+        }
+
+        foreach ($candidates as $filename) {
+            $filePath = $projectPath.'/'.$filename;
+            if (! File::exists($filePath)) {
+                continue;
+            }
+
+            $content = File::get($filePath);
+
+            // Match ---\n{...}\n--- frontmatter block
+            if (preg_match('/^---\s*\n(\{.*?\})\s*\n---/s', $content, $matches)) {
+                $decoded = json_decode($matches[1], true);
+                if (is_array($decoded) && isset($decoded['metadata']) && is_array($decoded['metadata'])) {
+                    return $decoded['metadata'];
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Resolve the project type from frontmatter, falling back to smart inference.
+     */
+    private function resolveProjectType(string $projectPath, array $dependencies): string
+    {
+        $meta = $this->parseJldnFrontmatter($projectPath);
+        if (! empty($meta['type'])) {
+            return (string) $meta['type'];
+        }
+
+        return $this->inferProjectType($projectPath, $dependencies);
+    }
+
+    /**
+     * Infer the project type from file signatures when frontmatter is absent.
+     */
+    private function inferProjectType(string $path, array $dependencies): string
+    {
+        $composerDeps = array_merge(
+            array_keys($dependencies['composer'] ?? []),
+            array_keys($dependencies['composer_dev'] ?? [])
+        );
+        $npmDeps = array_merge(
+            array_keys($dependencies['npm'] ?? []),
+            array_keys($dependencies['npm_dev'] ?? [])
+        );
+
+        // Laravel web application
+        if (in_array('laravel/framework', $composerDeps, true)) {
+            return 'web-app';
+        }
+        // Next.js or Vite SPA
+        if (in_array('next', $npmDeps, true) || in_array('vite', $npmDeps, true)) {
+            return 'web-app';
+        }
+        // Pulsar/IDE plugin
+        if (File::exists($path.'/keymaps') || File::exists($path.'/menus')) {
+            return 'plugin';
+        }
+        // Book/CSS paged media
+        if (File::exists($path.'/book.css') || count(glob($path.'/*.css') ?: []) > 0) {
+            $cssFiles = glob($path.'/*.css') ?: [];
+            foreach ($cssFiles as $css) {
+                if (str_contains((string) File::get($css), '@page')) {
+                    return 'book';
+                }
+            }
+        }
+        // PHP library (no laravel, no web entry)
+        if (! empty($composerDeps) && ! $this->hasWebEntryPoint($path)) {
+            return 'library';
+        }
+        // npm-only library
+        if (empty($composerDeps) && ! empty($npmDeps) && ! $this->hasWebEntryPoint($path)) {
+            return 'library';
+        }
+        // Docs heavy (no src, no public)
+        if (! File::isDirectory($path.'/src') && ! File::isDirectory($path.'/public') && count(glob($path.'/*.md') ?: []) > 2) {
+            return 'docs';
+        }
+
+        return 'general';
+    }
+
+    /**
+     * Resolve the remote platform host (github|gitlab) from frontmatter.
+     */
+    private function resolvePlatformHost(string $projectPath): string
+    {
+        $meta = $this->parseJldnFrontmatter($projectPath);
+        $platform = (string) ($meta['platform'] ?? 'github:private');
+
+        return explode(':', $platform)[0] ?? 'github';
+    }
+
+    /**
+     * Resolve the platform visibility (public|private) from frontmatter.
+     */
+    private function resolvePlatformVisibility(string $projectPath): string
+    {
+        $meta = $this->parseJldnFrontmatter($projectPath);
+        $platform = (string) ($meta['platform'] ?? 'github:private');
+        $parts = explode(':', $platform);
+
+        return $parts[1] ?? 'private';
     }
 
     private function toTitleCase(string $name): string

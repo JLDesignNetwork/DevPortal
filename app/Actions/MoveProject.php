@@ -10,33 +10,67 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\File;
 use InvalidArgumentException;
 
 class MoveProject
 {
-    private const array ALLOWED_CATEGORIES = ['Active', 'Archive', 'Sandbox'];
+    public function __construct(
+        private readonly SettingsService $settingsService,
+    ) {}
 
     /**
      * Move a project directory to another watch location and category.
      *
      * @param  string  $sourcePath  The absolute path of the source project folder
      * @param  string  $targetBasePath  The target base path to move the project to
-     * @param  string  $targetCategory  The category to move to (Active, Archive, Sandbox)
+     * @param  string  $targetCategory  The category to move to (Active, Archived, Sandboxed)
      * @return string The new absolute path of the project directory.
      *
      * @throws InvalidArgumentException
      */
     public function execute(string $sourcePath, string $targetBasePath, string $targetCategory): string
     {
+        $allowlistedPaths = $this->settingsService->getAllowlistedPaths();
+        $allowedCategories = $this->settingsService->getAllowedCategories();
+
         // 1. Validate target category
-        if (! in_array($targetCategory, self::ALLOWED_CATEGORIES, true)) {
-            throw new InvalidArgumentException("Invalid target category: {$targetCategory}. Allowed categories are: ".implode(', ', self::ALLOWED_CATEGORIES));
+        if (! in_array($targetCategory, $allowedCategories, true)) {
+            throw new InvalidArgumentException("Invalid target category: {$targetCategory}. Allowed categories are: ".implode(', ', $allowedCategories));
         }
 
         // 2. Validate source path existence
         if (! File::isDirectory($sourcePath)) {
             throw new InvalidArgumentException("Source project directory does not exist: {$sourcePath}");
+        }
+
+        // 2a. Validate target base path is allowlisted
+        $isTargetAllowlisted = false;
+        foreach ($allowlistedPaths as $path) {
+            if (realpath($path) === realpath($targetBasePath) || $path === $targetBasePath) {
+                $isTargetAllowlisted = true;
+                break;
+            }
+        }
+
+        if (! $isTargetAllowlisted) {
+            throw new InvalidArgumentException("Target base path is not an allowlisted scan path: {$targetBasePath}");
+        }
+
+        // 2b. Validate source path is contained within an allowlisted path
+        $realSource = realpath($sourcePath) ?: $sourcePath;
+        $isSourceAllowlisted = false;
+        foreach ($allowlistedPaths as $path) {
+            $realAllowlisted = realpath($path) ?: $path;
+            if (str_starts_with($realSource, $realAllowlisted)) {
+                $isSourceAllowlisted = true;
+                break;
+            }
+        }
+
+        if (! $isSourceAllowlisted) {
+            throw new InvalidArgumentException("Source path is not inside any allowlisted scan path: {$sourcePath}");
         }
 
         // 3. Define target path

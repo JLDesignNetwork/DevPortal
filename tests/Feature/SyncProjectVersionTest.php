@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 use App\Actions\SyncProjectVersion;
 use App\Services\ProjectScanner;
+use App\Services\SettingsService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
+
+uses(RefreshDatabase::class);
 
 it('auto-generates changelog when git tag is higher than changelog version', function (): void {
     $baseDir = storage_path('framework/testing/sync_test_base');
@@ -36,7 +40,7 @@ it('auto-generates changelog when git tag is higher than changelog version', fun
     // Tag the new version (which is higher than the Changelog)
     new Process(['git', 'tag', 'v1.1.0'], $tempDir)->run();
 
-    $action = new SyncProjectVersion(new ProjectScanner);
+    $action = new SyncProjectVersion(new ProjectScanner(new SettingsService));
 
     // Execute action
     $result = $action->execute($tempDir);

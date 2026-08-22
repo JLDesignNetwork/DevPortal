@@ -67,12 +67,32 @@ class SettingsService
     {
         $val = $this->get('allowlisted_paths');
         if ($val === null) {
-            return [base_path('../')];
+            return [base_path('../../')];
         }
 
         $decoded = json_decode((string) $val, true);
         if (! is_array($decoded)) {
-            return [base_path('../')];
+            return [base_path('../../')];
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Get the allowed project category names.
+     *
+     * @return array<int, string>
+     */
+    public function getAllowedCategories(): array
+    {
+        $val = $this->get('allowed_categories');
+        if ($val === null) {
+            return ['Active', 'Archived', 'Sandboxed'];
+        }
+
+        $decoded = json_decode((string) $val, true);
+        if (! is_array($decoded) || $decoded === []) {
+            return ['Active', 'Archived', 'Sandboxed'];
         }
 
         return $decoded;
