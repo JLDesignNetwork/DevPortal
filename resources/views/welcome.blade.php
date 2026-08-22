@@ -56,20 +56,20 @@
                 >Active <span class="badge" id="stats-active-count" style="margin-left: 0.5rem; background: var(--bg-card); color: var(--text-main);">…</span></button>
                 <button
                     class="tab-button"
-                    data-category="Archive"
+                    data-category="Archived"
                     role="tab"
                     aria-selected="false"
                     id="tab-archive"
                     aria-controls="project-list"
-                >Archive <span class="badge" id="stats-archive-count" style="margin-left: 0.5rem; background: var(--bg-card); color: var(--text-main);">…</span></button>
+                >Archived <span class="badge" id="stats-archive-count" style="margin-left: 0.5rem; background: var(--bg-card); color: var(--text-main);">…</span></button>
                 <button
                     class="tab-button"
-                    data-category="Sandbox"
+                    data-category="Sandboxed"
                     role="tab"
                     aria-selected="false"
                     id="tab-sandbox"
                     aria-controls="project-list"
-                >Sandbox <span class="badge" id="stats-sandbox-count" style="margin-left: 0.5rem; background: var(--bg-card); color: var(--text-main);">…</span></button>
+                >Sandboxed <span class="badge" id="stats-sandbox-count" style="margin-left: 0.5rem; background: var(--bg-card); color: var(--text-main);">…</span></button>
 
             </nav>
 
@@ -81,8 +81,10 @@
                         <option value="date-asc">Modified: Oldest</option>
                         <option value="created-desc">Created: Newest</option>
                         <option value="created-asc">Created: Oldest</option>
-                        <option value="alpha-asc">Alphabetical: A-Z</option>
-                        <option value="alpha-desc">Alphabetical: Z-A</option>
+                        <option value="alpha-asc">Alphabetical: A–Z</option>
+                        <option value="alpha-desc">Alphabetical: Z–A</option>
+                        <option value="type-asc">Type: A–Z</option>
+                        <option value="type-desc">Type: Z–A</option>
                     </select>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted);">
                         <polyline points="6 9 12 15 18 9"></polyline>
@@ -106,6 +108,9 @@
                 </div>
             </div>
         </div>
+
+        {{-- Type Filter Strip --}}
+        <div id="type-filter-strip" style="display: none;" aria-label="Filter by project type"></div>
 
         {{-- Project List --}}
         <main id="project-list" role="tabpanel" aria-labelledby="tab-dashboard">
@@ -236,7 +241,7 @@
                             <div id="settings-paths" class="settings-panel" style="display: none;">
                                 <div class="settings-section">
                                     <h3 style="margin-top: 0;">Scan Locations</h3>
-                                    <p class="section-desc">Specify directory paths to scan. Each location should contain <code>Active</code>, <code>Archive</code>, or <code>Sandbox</code> subfolders.</p>
+                                    <p class="section-desc">Specify directory paths to scan. Each location should contain <code>Active</code>, <code>Archived</code>, or <code>Sandboxed</code> subfolders.</p>
                                     
                                     <div class="path-list" id="settings-path-list">
                                         {{-- Rendered dynamically by JavaScript --}}
@@ -273,7 +278,7 @@
                                     <div class="form-group-row">
                                         <div class="form-group">
                                             <label for="settings-sync-exclude-categories">Categories</label>
-                                            <textarea id="settings-sync-exclude-categories" class="form-input" rows="2" placeholder="e.g., Sandbox, Archive"></textarea>
+                                            <textarea id="settings-sync-exclude-categories" class="form-input" rows="2" placeholder="e.g., Sandboxed, Archived"></textarea>
                                         </div>
                                         <div class="form-group">
                                             <label for="settings-sync-exclude-projects">Projects</label>
@@ -303,7 +308,7 @@
                                     <div class="form-group-row">
                                         <div class="form-group">
                                             <label for="settings-entry-exclude-categories">Categories</label>
-                                            <textarea id="settings-entry-exclude-categories" class="form-input" rows="2" placeholder="e.g., Archive"></textarea>
+                                            <textarea id="settings-entry-exclude-categories" class="form-input" rows="2" placeholder="e.g., Archived"></textarea>
                                         </div>
                                         <div class="form-group">
                                             <label for="settings-entry-exclude-projects">Projects</label>
@@ -462,6 +467,70 @@
             from { transform: rotate(0deg); }
             to   { transform: rotate(360deg); }
         }
+
+        /* ─── Type Filter Strip ─────────────────────────────────────────── */
+        #type-filter-strip {
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            padding: 0.625rem 0 0.75rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.25rem;
+        }
+
+        .type-filter-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.85rem;
+            border-radius: var(--radius-full, 9999px);
+            font-size: 0.78rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .type-filter-pill:hover {
+            background: var(--bg-hover, hsl(220 14% 20%));
+            color: var(--text-main);
+        }
+        .type-filter-pill.active {
+            background: var(--accent, hsl(220 90% 56%));
+            border-color: transparent;
+            color: #fff;
+        }
+
+        /* ─── Type Badge Pills on Cards ─────────────────────────────────── */
+        .badge-type {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-full, 9999px);
+            letter-spacing: 0.02em;
+            text-transform: capitalize;
+        }
+
+        /* web-app — blue */
+        .badge-type--web-app        { background: hsl(213 90% 20%); color: hsl(213 90% 75%); }
+        /* live-site — green */
+        .badge-type--live-site      { background: hsl(145 55% 18%); color: hsl(145 60% 65%); }
+        /* ruleset — purple */
+        .badge-type--ruleset        { background: hsl(270 50% 20%); color: hsl(270 60% 75%); }
+        /* cli — orange */
+        .badge-type--cli            { background: hsl(30 80% 18%);  color: hsl(30 90% 65%);  }
+        /* plugin — teal */
+        .badge-type--plugin         { background: hsl(180 50% 16%); color: hsl(180 55% 62%); }
+        /* library — yellow */
+        .badge-type--library        { background: hsl(48 75% 16%);  color: hsl(48 90% 60%);  }
+        /* docs — slate */
+        .badge-type--docs           { background: hsl(220 20% 20%); color: hsl(220 20% 68%); }
+        /* book — rose */
+        .badge-type--book           { background: hsl(340 55% 18%); color: hsl(340 65% 70%); }
+        /* sandbox — amber */
+        .badge-type--sandbox        { background: hsl(40 70% 16%);  color: hsl(40 80% 60%);  }
+        /* general — neutral */
+        .badge-type--general        { background: hsl(220 10% 18%); color: hsl(220 10% 58%); }
     </style>
 </body>
 </html>

@@ -79,6 +79,6 @@ and this project adheres to the [JLDN Generational Versioning Schema (GVS)](http
 ## [2605.1.0-bs] - 2026-05-28
 
 ### Added
-- **Core scanning engine**: Automatically scans watch directories for project folders categorized under `Active`, `Archive`, and `Sandbox`.
+- **Core scanning engine**: Automatically scans watch directories for project folders categorized under `Active`, `Archived`, and `Sandboxed`.
 - **Project Card UI**: Renders cards displaying parsed project name, framework version, Git branch, Git dirty file status, and last modified dates.
 - **Action utilities**: Quick button to open the `.test` domain in a local browser, copy the absolute path, and move project categories.

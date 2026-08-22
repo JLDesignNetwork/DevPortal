@@ -48,7 +48,7 @@ test('getCacheTtl returns integer defaults and custom values', function (): void
 });
 
 test('getAllowlistedPaths returns array default and custom values', function (): void {
-    expect($this->service->getAllowlistedPaths())->toBe([base_path('../')]);
+    expect($this->service->getAllowlistedPaths())->toBe([base_path('../../')]);
 
     $customPaths = ['/Users/jeff/Sites', '/Users/jeff/Projects'];
     $this->service->set('allowlisted_paths', $customPaths);

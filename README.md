@@ -27,7 +27,7 @@ Dev Portal is a local developer dashboard built with Laravel, Vanilla CSS, and m
    - Limit configurations can be customized in the portal settings.
 
 2. **Multi-Category Project Scanning**:
-   - Automatically scans allowlisted watch directories for subfolders categorized as `Active`, `Archive`, or `Sandbox`.
+   - Automatically scans allowlisted watch directories for subfolders categorized as `Active`, `Archived`, or `Sandboxed`.
    - Caches scanning results to maximize page loading speeds (fully customizable TTL).
 
 3. **Rich Metadata Extraction**:
@@ -54,13 +54,30 @@ Dev Portal is a local developer dashboard built with Laravel, Vanilla CSS, and m
 
 ---
 
+## Future Features
+
+The following ideas are currently planned or under consideration for future development to expand DevPortal into a fully-fledged local development environment manager:
+
+- **GitHub/GitLab Repo Creation Wizard**: A guided UI to detect local projects without remotes and execute a `gh`/`glab` CLI initialization (enforcing JLDN branching protocols and smart-defaulting the platform based on the project archetype).
+- **True Sandboxed Network Isolation**: Application-layer sandboxing for the `Sandboxed/` category using `.env` toggles and Herd `php.ini` overrides (disabling `allow_url_fopen` and `curl_exec`).
+- **Shell-Triggered Project Scaffolding**: A "Create New Project" modal that triggers a backend shell script to instantly scaffold a new project directory adhering to the baseline JLDN standards.
+- **Project Health Score**: A composite badge evaluating the presence of required JLDN files (`README`, `CHANGELOG`, `.dev/`, `.agents/`), a clean Git tree, and synced versions.
+- **Inactivity Detection & Auto-Archive**: A proactive banner that suggests archiving projects in the `Active/` folder that have seen no Git commits for a configurable number of days.
+- **Batch Git Sync**: A single button to run `git pull` across all active projects with live streaming terminal output in the UI.
+- **Local Notification System**: Native macOS push notifications (via AppleScript) for long-running events like batch version syncing or scaffolding.
+- **Environment Variable Viewer**: A read-only, in-portal inspector for `.env` files that automatically masks sensitive secret values.
+- **Artisan Command Runner**: An interface panel to execute an allowlisted set of Laravel artisan commands (like `migrate`, `optimize`, `cache:clear`) without opening a terminal.
+- **Per-Project Notes**: An integrated, editable text area synced to a local `NOTES.md` file for storing quick local setup instructions or developer gotchas.
+
+---
+
 ## Configuration & Usage
 
 Once the Dev Portal is running, click the **Settings** icon in the top right header to customize your environment:
 
 1. **Scan Locations**:
    - Add one or more watch directories on your local drive (e.g., `/Users/username/Sites` or `/Users/username/Code`).
-   - Inside each watch directory, Dev Portal expects three category subfolders: `Active/`, `Archive/`, and `Sandbox/`.
+   - Inside each watch directory, Dev Portal expects three category subfolders: `Active/`, `Archived/`, and `Sandboxed/`.
 2. **Local Domain**:
    - Set the local domain extension (TLD) corresponding to your local server setup (e.g. `test` for Laravel Valet/Herd, `local`, or `localhost`).
 3. **Scanning Cache**:

@@ -31,7 +31,7 @@ class TestEntryPoints
         $projects = $this->scanner->scan($this->settingsService->getAllowlistedPaths());
         $domainExtension = $this->settingsService->get('domain_extension', 'test');
 
-        $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('entry_exclude_categories', ['Archive']));
+        $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('entry_exclude_categories', ['Archived']));
         $excludeProjs = array_map(strtolower(...), $this->settingsService->getArray('entry_exclude_projects', []));
         $includeCats = array_map(strtolower(...), $this->settingsService->getArray('entry_include_categories', []));
         $includeProjs = array_map(strtolower(...), $this->settingsService->getArray('entry_include_projects', []));

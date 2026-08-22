@@ -15,9 +15,9 @@ DevPortal organizes projects by **Watch Locations** and **Category Subfolders**:
 ├── Active/                      # Actively maintained projects
 │   ├── DevPortal/
 │   └── Todo-Schema/
-├── Archive/                     # Archived, read-only, or legacy projects
+├── Archived/                     # Archived, read-only, or legacy projects
 │   └── LegacyApp/
-└── Sandbox/                     # Exploratory prototypes and scratch builds
+└── Sandboxed/                     # Exploratory prototypes and scratch builds
     └── PrototypeX/
 ```
 
@@ -45,7 +45,7 @@ Click the **Settings** icon in the top right corner of the dashboard to configur
 
 ### Relocating Projects Across Categories
 - Click the **Move** button on any project card.
-- Select the destination watch location and category (`Active`, `Archive`, `Sandbox`).
+- Select the destination watch location and category (`Active`, `Archived`, `Sandboxed`).
 - DevPortal verifies destination non-collision, performs the atomic directory move, and invalidates the scanner cache.
 
 ### Safe Project Deletion

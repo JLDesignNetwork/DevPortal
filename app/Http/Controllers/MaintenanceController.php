@@ -67,7 +67,7 @@ final class MaintenanceController extends Controller
         $successCount = 0;
         $failCount = 0;
 
-        $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('sync_exclude_categories', ['Sandbox']));
+        $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('sync_exclude_categories', ['Sandboxed']));
         $excludeProjs = array_map(strtolower(...), $this->settingsService->getArray('sync_exclude_projects', []));
         $includeCats = array_map(strtolower(...), $this->settingsService->getArray('sync_include_categories', []));
         $includeProjs = array_map(strtolower(...), $this->settingsService->getArray('sync_include_projects', []));

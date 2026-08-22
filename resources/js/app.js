@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // State management
     let projects = [];
     let activeCategory = 'Dashboard';
+    let activeTypeFilter = 'all';
     let searchQuery = '';
     let sortMode = 'date-desc';
     let settings = {
@@ -21,11 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
         splash_recent_count: 5,
         splash_active_count: 5,
         domain_extension: 'test',
-        sync_exclude_categories: ['Sandbox'],
+        sync_exclude_categories: ['Sandboxed'],
         sync_exclude_projects: [],
         sync_include_categories: [],
         sync_include_projects: [],
-        entry_exclude_categories: ['Archive'],
+        entry_exclude_categories: ['Archived'],
         entry_exclude_projects: [],
         entry_include_categories: [],
         entry_include_projects: [],
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cache DOM elements
     const projectListContainer = document.getElementById('project-list');
+    const typeFilterStrip = document.getElementById('type-filter-strip');
     const tabButtons = document.querySelectorAll('.controls-bar .tab-button');
     const searchInput = document.getElementById('search-input');
     const statsActiveCount = document.getElementById('stats-active-count');
@@ -179,15 +181,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update category badge counters
     function updateStats() {
-        const counts = { Active: 0, Archive: 0, Sandbox: 0 };
+        const counts = { Active: 0, Archived: 0, Sandboxed: 0 };
         projects.forEach(p => {
             if (counts[p.category] !== undefined) {
                 counts[p.category]++;
             }
         });
         if (statsActiveCount) statsActiveCount.textContent = String(counts.Active);
-        if (statsArchiveCount) statsArchiveCount.textContent = String(counts.Archive);
-        if (statsSandboxCount) statsSandboxCount.textContent = String(counts.Sandbox);
+        if (statsArchiveCount) statsArchiveCount.textContent = String(counts.Archived);
+        if (statsSandboxCount) statsSandboxCount.textContent = String(counts.Sandboxed);
     }
 
     // Move project category & base path via AJAX
@@ -289,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let categoryClass = 'badge-git-branch';
                 if (project.category === 'Active') categoryClass = 'badge-git-clean';
-                else if (project.category === 'Archive') categoryClass = 'badge-time';
+                else if (project.category === 'Archived') categoryClass = 'badge-time';
 
                 item.innerHTML = `
                     <div class="widget-item-header">
@@ -394,8 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 project.name.toLowerCase().includes(searchQuery) ||
                 (project.description && project.description.toLowerCase().includes(searchQuery)) ||
                 project.relative_path.toLowerCase().includes(searchQuery);
-            return matchesCategory && matchesSearch;
+            const matchesType = activeTypeFilter === 'all' || project.type === activeTypeFilter;
+            return matchesCategory && matchesSearch && matchesType;
         });
+
+        buildTypePillStrip(projects.filter(p => p.category === activeCategory));
 
         // Sort projects
         filtered.sort((a, b) => {
@@ -413,6 +418,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return cleanNameA.localeCompare(cleanNameB);
                 case 'alpha-desc':
                     return cleanNameB.localeCompare(cleanNameA);
+                case 'type-asc':
+                    return (a.type || 'general').localeCompare(b.type || 'general');
+                case 'type-desc':
+                    return (b.type || 'general').localeCompare(a.type || 'general');
                 case 'date-desc':
                 default:
                     return b.last_modified_timestamp - a.last_modified_timestamp;
@@ -436,6 +445,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'project-card';
             
+            // Build type badge
+            const typeLabel = (project.type || 'general').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const typeBadgeHtml = `<span class="badge badge-type badge-type--${project.type || 'general'}" title="Project type">${typeLabel}</span>`;
+
             // Build Git Badge
             let gitBadgeHtml = '';
             if (project.git_branch !== null) {
@@ -471,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const projectDirName = project.path.split('/').pop();
             const selectOptionsHtml = settings.allowlisted_paths.flatMap(basePath => {
                 const baseLabel = basePath.split('/').pop() || basePath;
-                return ['Active', 'Archive', 'Sandbox'].map(cat => {
+                return ['Active', 'Archived', 'Sandboxed'].map(cat => {
                     const optionDest = `${basePath}/${cat}/${projectDirName}`;
                     const isSelected = (project.path === optionDest);
                     return `<option value="${basePath}|${cat}" ${isSelected ? 'selected' : ''}>Move to ${baseLabel}: ${cat}</option>`;
@@ -501,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="project-description">${project.description || 'No description found in README.md'}</p>
                     
                     <div class="project-badges">
+                        ${typeBadgeHtml}
                         ${gitBadgeHtml}
                         <span class="badge badge-time" title="Last Updated">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></svg>
@@ -545,6 +559,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add Event Listeners to Card buttons/controls
         addCardEventListeners();
+    }
+
+    /**
+     * Build the type filter pill strip, showing unique types in the current category.
+     * Hides the strip when on Dashboard or when only one type exists.
+     */
+    function buildTypePillStrip(categoryProjects) {
+        if (!typeFilterStrip) return;
+
+        if (activeCategory === 'Dashboard' || categoryProjects.length === 0) {
+            typeFilterStrip.style.display = 'none';
+            return;
+        }
+
+        const typeCounts = {};
+        categoryProjects.forEach(p => {
+            const t = p.type || 'general';
+            typeCounts[t] = (typeCounts[t] || 0) + 1;
+        });
+
+        const uniqueTypes = Object.keys(typeCounts).sort();
+
+        // Only show strip when there are multiple types
+        if (uniqueTypes.length <= 1) {
+            typeFilterStrip.style.display = 'none';
+            return;
+        }
+
+        typeFilterStrip.style.display = 'flex';
+        typeFilterStrip.innerHTML = '';
+
+        // All pill
+        const allPill = document.createElement('button');
+        allPill.type = 'button';
+        allPill.className = `type-filter-pill ${activeTypeFilter === 'all' ? 'active' : ''}`;
+        allPill.dataset.type = 'all';
+        allPill.textContent = `All (${categoryProjects.length})`;
+        allPill.addEventListener('click', () => {
+            activeTypeFilter = 'all';
+            renderProjects();
+        });
+        typeFilterStrip.appendChild(allPill);
+
+        uniqueTypes.forEach(type => {
+            const label = type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = `type-filter-pill type-filter-pill--${type} ${activeTypeFilter === type ? 'active' : ''}`;
+            pill.dataset.type = type;
+            pill.textContent = `${label} (${typeCounts[type]})`;
+            pill.addEventListener('click', () => {
+                activeTypeFilter = type;
+                renderProjects();
+            });
+            typeFilterStrip.appendChild(pill);
+        });
     }
 
     // Bind events for copy path buttons and category selects
@@ -915,7 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
         detailsCategoryBadge.className = 'badge';
         if (project.category === 'Active') {
             detailsCategoryBadge.classList.add('badge-git-clean');
-        } else if (project.category === 'Archive') {
+        } else if (project.category === 'Archived') {
             detailsCategoryBadge.classList.add('badge-time');
         } else {
             detailsCategoryBadge.classList.add('badge-git-branch');
@@ -1038,6 +1108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             activeCategory = button.dataset.category;
+            activeTypeFilter = 'all'; // Reset type filter on category switch
             closeSpecialViews();
         });
     });

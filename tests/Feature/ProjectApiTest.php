@@ -69,9 +69,9 @@ describe('GET /api/projects', function (): void {
                     'version' => 'N/A',
                     'production_version' => 'N/A',
                     'description' => null,
-                    'category' => 'Sandbox',
-                    'path' => '/some/path/Sandbox/workshop',
-                    'relative_path' => 'Sandbox/workshop',
+                    'category' => 'Sandboxed',
+                    'path' => '/some/path/Sandboxed/workshop',
+                    'relative_path' => 'Sandboxed/workshop',
                     'last_modified' => '5 minutes ago',
                     'last_modified_timestamp' => now()->timestamp,
                     'created_at' => '5 minutes ago',
@@ -113,14 +113,14 @@ describe('POST /api/projects/move', function (): void {
         $this->mock(MoveProject::class, function ($mock): void {
             $mock->shouldReceive('execute')
                 ->once()
-                ->withArgs(fn ($src, $base, $cat): bool => $src === '/some/path/Active/chirper' && $base === '/some/path' && $cat === 'Archive')
-                ->andReturn('/some/path/Archive/chirper');
+                ->withArgs(fn ($src, $base, $cat): bool => $src === '/some/path/Active/chirper' && $base === '/some/path' && $cat === 'Archived')
+                ->andReturn('/some/path/Archived/chirper');
         });
 
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/some/path/Active/chirper',
             'target_base_path' => '/some/path',
-            'target_category' => 'Archive',
+            'target_category' => 'Archived',
         ]);
 
         $response->assertStatus(200)
@@ -139,7 +139,7 @@ describe('POST /api/projects/move', function (): void {
 
     it('returns 422 when source_path or target_base_path is missing', function (): void {
         $response = $this->postJson('/api/projects/move', [
-            'target_category' => 'Archive',
+            'target_category' => 'Archived',
         ]);
 
         $response->assertStatus(422)
@@ -153,7 +153,7 @@ describe('POST /api/projects/move', function (): void {
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/some/path/Active/chirper',
             'target_base_path' => '/unauthorized/path',
-            'target_category' => 'Archive',
+            'target_category' => 'Archived',
         ]);
 
         $response->assertStatus(422)
@@ -170,7 +170,7 @@ describe('POST /api/projects/move', function (): void {
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/unauthorized/path/Active/chirper',
             'target_base_path' => '/some/path',
-            'target_category' => 'Archive',
+            'target_category' => 'Archived',
         ]);
 
         $response->assertStatus(422)
@@ -193,7 +193,7 @@ describe('POST /api/projects/move', function (): void {
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/some/path/Active/chirper',
             'target_base_path' => '/some/path',
-            'target_category' => 'Archive',
+            'target_category' => 'Archived',
         ]);
 
         $response->assertStatus(422)

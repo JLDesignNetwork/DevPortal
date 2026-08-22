@@ -31,7 +31,7 @@ The `ProjectScanner` service executes a resilient 4-stage pipeline for each disc
 
 1. **Category Directory Discovery:**
    - Resolves all configured watch paths from `SettingsService`.
-   - Discovers subdirectories matching `Active/`, `Archive/`, and `Sandbox/`.
+   - Discovers subdirectories matching `Active/`, `Archived/`, and `Sandboxed/`.
 2. **Manifest & Version Parsing:**
    - **PHP / Composer:** Inspects `composer.json` for framework tags (`laravel/framework`, `illuminate/support`) and package requirements.
    - **Node / PNPM:** Inspects `package.json` for frontend framework indicators (`next`, `vue`, `react`, `vite`, `tailwindcss`).
@@ -56,7 +56,7 @@ $basePath = dirname($categoryPath);
 $category = basename($categoryPath);
 
 // Tier 1: Category Invariant
-if (! in_array($category, ['Active', 'Archive', 'Sandbox'], true)) {
+if (! in_array($category, ['Active', 'Archived', 'Sandboxed'], true)) {
     return response()->json(['error' => 'Invalid category structure'], 422);
 }
 
