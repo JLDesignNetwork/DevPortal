@@ -36,66 +36,30 @@ final class ProjectController extends Controller
      */
     public function index(): JsonResponse
     {
-        $paths = $this->settingsService->getAllowlistedPaths();
-
         if ($this->settingsService->isCacheEnabled()) {
             $ttl = $this->settingsService->getCacheTtl();
-            $projects = Cache::remember('devportal.projects', $ttl, fn (): array => $this->scanner->scan($paths));
+            $projects = Cache::remember('devportal.projects', $ttl, fn (): array => $this->scanner->scan());
         } else {
-            $projects = $this->scanner->scan($paths);
+            $projects = $this->scanner->scan();
         }
 
         return response()->json($projects);
     }
 
     /**
-     * Move a project to a new category and location.
+     * Move a project into another configured category scan path.
      */
     public function move(Request $request): JsonResponse
     {
         $request->validate([
             'source_path' => ['required', 'string'],
-            'target_base_path' => ['required', 'string'],
-            'target_category' => ['required', 'string'],
+            'target_path' => ['required', 'string'],
         ]);
-
-        $sourcePath = $request->input('source_path');
-        $targetBasePath = $request->input('target_base_path');
-        $targetCategory = $request->input('target_category');
-
-        $allowlistedPaths = $this->settingsService->getAllowlistedPaths();
-
-        // Security check: ensure target_base_path is explicitly allowlisted
-        if (! in_array($targetBasePath, $allowlistedPaths, true)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'The target location is not in the allowlisted scan paths.',
-            ], 422);
-        }
-
-        // Security check: ensure source_path is inside one of the allowlisted paths
-        $isSourcePathValid = false;
-        foreach ($allowlistedPaths as $path) {
-            $realSource = realpath($sourcePath) ?: $sourcePath;
-            $realPath = realpath($path) ?: $path;
-            if (str_starts_with((string) $realSource, $realPath)) {
-                $isSourcePathValid = true;
-                break;
-            }
-        }
-
-        if (! $isSourcePathValid) {
-            return response()->json([
-                'success' => false,
-                'error' => 'The source path is not inside any allowlisted scan paths.',
-            ], 422);
-        }
 
         try {
             $this->moveProject->execute(
-                $sourcePath,
-                $targetBasePath,
-                $targetCategory
+                $request->input('source_path'),
+                $request->input('target_path'),
             );
 
             Cache::forget('devportal.projects');
@@ -121,47 +85,8 @@ final class ProjectController extends Controller
             'path' => ['required', 'string'],
         ]);
 
-        $projectPath = $request->input('path');
-        $allowlistedPaths = $this->settingsService->getAllowlistedPaths();
-
-        $realProjectPath = realpath($projectPath);
-        if ($realProjectPath === false) {
-            return response()->json([
-                'success' => false,
-                'error' => 'The project directory does not exist.',
-            ], 422);
-        }
-
-        $categoryPath = dirname($realProjectPath);
-        $basePath = dirname($categoryPath);
-        $category = basename($categoryPath);
-
-        $allowedCategories = $this->settingsService->getAllowedCategories();
-        if (! in_array($category, $allowedCategories, true)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Invalid project category directory structure.',
-            ], 422);
-        }
-
-        $isPathAllowlisted = false;
-        foreach ($allowlistedPaths as $path) {
-            $realAllowlisted = realpath($path);
-            if ($realAllowlisted === $basePath) {
-                $isPathAllowlisted = true;
-                break;
-            }
-        }
-
-        if (! $isPathAllowlisted) {
-            return response()->json([
-                'success' => false,
-                'error' => 'The project is not located in any allowlisted scan paths.',
-            ], 422);
-        }
-
         try {
-            $this->deleteProject->execute($realProjectPath);
+            $this->deleteProject->execute($request->input('path'));
 
             Cache::forget('devportal.projects');
 

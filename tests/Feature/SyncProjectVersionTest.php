@@ -40,7 +40,10 @@ it('auto-generates changelog when git tag is higher than changelog version', fun
     // Tag the new version (which is higher than the Changelog)
     new Process(['git', 'tag', 'v1.1.0'], $tempDir)->run();
 
-    $action = new SyncProjectVersion(new ProjectScanner(new SettingsService));
+    $settingsService = new SettingsService;
+    $settingsService->set('category_paths', ['Active' => [$baseDir.'/Active']]);
+
+    $action = new SyncProjectVersion(new ProjectScanner($settingsService));
 
     // Execute action
     $result = $action->execute($tempDir);

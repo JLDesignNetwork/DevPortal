@@ -14,7 +14,7 @@ beforeEach(function (): void {
     mkdir($this->tmpDir.'/Active');
 
     $settingsService = new SettingsService;
-    $settingsService->set('allowlisted_paths', [$this->tmpDir]);
+    $settingsService->set('category_paths', ['Active' => [$this->tmpDir.'/Active']]);
 
     $this->action = new DeleteProject($settingsService);
 });
@@ -49,16 +49,16 @@ test('throws InvalidArgumentException when directory does not exist', function (
         ->toThrow(InvalidArgumentException::class, 'Project directory does not exist');
 });
 
-test('throws InvalidArgumentException when project category is not allowed', function (): void {
+test('throws InvalidArgumentException when project is not inside a configured category path', function (): void {
     $projectPath = $this->tmpDir.'/Production/chirper';
     mkdir($this->tmpDir.'/Production');
     mkdir($projectPath);
 
     expect(fn () => $this->action->execute($projectPath))
-        ->toThrow(InvalidArgumentException::class, 'Invalid project category directory structure');
+        ->toThrow(InvalidArgumentException::class, 'not inside any configured category scan path');
 });
 
-test('throws InvalidArgumentException when project is outside allowlisted paths', function (): void {
+test('throws InvalidArgumentException when project is outside all configured category paths', function (): void {
     $outsideDir = sys_get_temp_dir().'/devportal-delete-outside-'.uniqid();
     mkdir($outsideDir);
     mkdir($outsideDir.'/Active');
@@ -67,7 +67,7 @@ test('throws InvalidArgumentException when project is outside allowlisted paths'
 
     try {
         expect(fn () => $this->action->execute($projectPath))
-            ->toThrow(InvalidArgumentException::class, 'not inside any allowlisted scan path');
+            ->toThrow(InvalidArgumentException::class, 'not inside any configured category scan path');
     } finally {
         rmdir($projectPath);
         rmdir($outsideDir.'/Active');

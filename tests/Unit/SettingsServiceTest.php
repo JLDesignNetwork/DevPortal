@@ -47,13 +47,28 @@ test('getCacheTtl returns integer defaults and custom values', function (): void
     expect($this->service->getCacheTtl())->toBe(600);
 });
 
-test('getAllowlistedPaths returns array default and custom values', function (): void {
-    expect($this->service->getAllowlistedPaths())->toBe([base_path('../../')]);
+test('getCategoryPaths returns empty arrays for every allowed category by default', function (): void {
+    expect($this->service->getCategoryPaths())->toBe([
+        'Active' => [],
+        'Archived' => [],
+        'Sandboxed' => [],
+    ]);
+});
 
-    $customPaths = ['/Users/jeff/Sites', '/Users/jeff/Projects'];
-    $this->service->set('allowlisted_paths', $customPaths);
+test('getCategoryPaths returns custom values and getCategoryPathsFor reads a single category', function (): void {
+    $this->service->set('category_paths', [
+        'Active' => ['/Users/jeff/Sites/Active'],
+        'Archived' => ['/Users/jeff/Sites/Archived', '/Volumes/Backup/Archived'],
+    ]);
 
-    expect($this->service->getAllowlistedPaths())->toBe($customPaths);
+    expect($this->service->getCategoryPaths())->toBe([
+        'Active' => ['/Users/jeff/Sites/Active'],
+        'Archived' => ['/Users/jeff/Sites/Archived', '/Volumes/Backup/Archived'],
+        'Sandboxed' => [],
+    ]);
+
+    expect($this->service->getCategoryPathsFor('Active'))->toBe(['/Users/jeff/Sites/Active']);
+    expect($this->service->getCategoryPathsFor('Sandboxed'))->toBe([]);
 });
 
 test('getSplashRecentCount returns default and custom values', function (): void {

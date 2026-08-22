@@ -30,7 +30,8 @@ class SettingsController extends Controller
         return response()->json([
             'cache_enabled' => $this->settingsService->isCacheEnabled(),
             'cache_ttl' => $this->settingsService->getCacheTtl(),
-            'allowlisted_paths' => $this->settingsService->getAllowlistedPaths(),
+            'categories' => $this->settingsService->getAllowedCategories(),
+            'category_paths' => $this->settingsService->getCategoryPaths(),
             'splash_recent_count' => $this->settingsService->getSplashRecentCount(),
             'splash_active_count' => $this->settingsService->getSplashActiveCount(),
             'domain_extension' => $this->settingsService->getDomainExtension(),
@@ -54,8 +55,9 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'cache_enabled' => ['required', 'boolean'],
             'cache_ttl' => ['required', 'integer', 'min:0'],
-            'allowlisted_paths' => ['present', 'array'],
-            'allowlisted_paths.*' => ['required', 'string'],
+            'category_paths' => ['present', 'array'],
+            'category_paths.*' => ['present', 'array'],
+            'category_paths.*.*' => ['required', 'string'],
             'splash_recent_count' => ['required', 'integer', 'min:1'],
             'splash_active_count' => ['required', 'integer', 'min:1'],
             'domain_extension' => ['required', 'string', 'regex:/^[a-zA-Z0-9\.-]+$/'],
@@ -70,13 +72,23 @@ class SettingsController extends Controller
             'entry_include_projects' => ['present', 'array'],
         ]);
 
-        // Validate that all custom folders exist on disk
-        foreach ($validated['allowlisted_paths'] as $path) {
-            if (! File::isDirectory($path)) {
+        // Validate category keys and that all configured folders exist on disk
+        $allowedCategories = $this->settingsService->getAllowedCategories();
+        foreach ($validated['category_paths'] as $category => $paths) {
+            if (! in_array($category, $allowedCategories, true)) {
                 return response()->json([
                     'success' => false,
-                    'error' => "The directory \"{$path}\" does not exist on this machine.",
+                    'error' => "Unknown project category: \"{$category}\".",
                 ], 422);
+            }
+
+            foreach ($paths as $path) {
+                if (! File::isDirectory($path)) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => "The directory \"{$path}\" does not exist on this machine.",
+                    ], 422);
+                }
             }
         }
 
@@ -105,7 +117,7 @@ class SettingsController extends Controller
 
         $this->settingsService->set('cache_enabled', $validated['cache_enabled']);
         $this->settingsService->set('cache_ttl', $validated['cache_ttl']);
-        $this->settingsService->set('allowlisted_paths', $validated['allowlisted_paths']);
+        $this->settingsService->set('category_paths', $validated['category_paths']);
         $this->settingsService->set('splash_recent_count', $validated['splash_recent_count']);
         $this->settingsService->set('splash_active_count', $validated['splash_active_count']);
         $this->settingsService->set('domain_extension', $validated['domain_extension']);

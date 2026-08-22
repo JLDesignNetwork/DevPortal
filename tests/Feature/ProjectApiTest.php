@@ -107,83 +107,41 @@ describe('GET /api/projects', function (): void {
 describe('POST /api/projects/move', function (): void {
 
     it('returns 200 JSON success on a valid move request', function (): void {
-        $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', ['/some/path']);
-
         $this->mock(MoveProject::class, function ($mock): void {
             $mock->shouldReceive('execute')
                 ->once()
-                ->withArgs(fn ($src, $base, $cat): bool => $src === '/some/path/Active/chirper' && $base === '/some/path' && $cat === 'Archived')
+                ->with('/some/path/Active/chirper', '/some/path/Archived')
                 ->andReturn('/some/path/Archived/chirper');
         });
 
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/some/path/Active/chirper',
-            'target_base_path' => '/some/path',
-            'target_category' => 'Archived',
+            'target_path' => '/some/path/Archived',
         ]);
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
     });
 
-    it('returns 422 when target_category is missing', function (): void {
+    it('returns 422 when target_path is missing', function (): void {
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/some/path/Active/chirper',
-            'target_base_path' => '/some/path',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['target_category']);
+            ->assertJsonValidationErrors(['target_path']);
     });
 
-    it('returns 422 when source_path or target_base_path is missing', function (): void {
+    it('returns 422 when source_path is missing', function (): void {
         $response = $this->postJson('/api/projects/move', [
-            'target_category' => 'Archived',
+            'target_path' => '/some/path/Archived',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['source_path', 'target_base_path']);
-    });
-
-    it('returns 422 if target_base_path is not allowlisted', function (): void {
-        $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', ['/some/path']);
-
-        $response = $this->postJson('/api/projects/move', [
-            'source_path' => '/some/path/Active/chirper',
-            'target_base_path' => '/unauthorized/path',
-            'target_category' => 'Archived',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'success' => false,
-                'error' => 'The target location is not in the allowlisted scan paths.',
-            ]);
-    });
-
-    it('returns 422 if source_path is not inside allowlisted paths', function (): void {
-        $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', ['/some/path']);
-
-        $response = $this->postJson('/api/projects/move', [
-            'source_path' => '/unauthorized/path/Active/chirper',
-            'target_base_path' => '/some/path',
-            'target_category' => 'Archived',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'success' => false,
-                'error' => 'The source path is not inside any allowlisted scan paths.',
-            ]);
+            ->assertJsonValidationErrors(['source_path']);
     });
 
     it('returns 422 with error message when MoveProject throws InvalidArgumentException', function (): void {
-        $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', ['/some/path']);
-
         $this->mock(MoveProject::class, function ($mock): void {
             $mock->shouldReceive('execute')
                 ->once()
@@ -192,14 +150,29 @@ describe('POST /api/projects/move', function (): void {
 
         $response = $this->postJson('/api/projects/move', [
             'source_path' => '/some/path/Active/chirper',
-            'target_base_path' => '/some/path',
-            'target_category' => 'Archived',
+            'target_path' => '/some/path/Archived',
         ]);
 
         $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
                 'error' => 'A project named chirper already exists at the target location.',
+            ]);
+    });
+
+    it('returns 422 when the real MoveProject action rejects an unconfigured target path', function (): void {
+        $settingsService = resolve(SettingsService::class);
+        $settingsService->set('category_paths', ['Active' => ['/some/path/Active']]);
+
+        $response = $this->postJson('/api/projects/move', [
+            'source_path' => '/some/path/Active/chirper',
+            'target_path' => '/unauthorized/path',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'error' => 'Target path is not a configured category scan path: /unauthorized/path',
             ]);
     });
 });
@@ -209,10 +182,6 @@ describe('POST /api/projects/move', function (): void {
 describe('DELETE /api/projects', function (): void {
 
     it('returns 200 JSON success on a valid delete request', function (): void {
-        $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', [sys_get_temp_dir()]);
-
-        // Create a temporary project path
         $projectPath = sys_get_temp_dir().'/Active/chirper';
         if (! is_dir(dirname($projectPath))) {
             mkdir(dirname($projectPath), 0755, true);
@@ -224,7 +193,7 @@ describe('DELETE /api/projects', function (): void {
         $this->mock(DeleteProject::class, function ($mock) use ($projectPath): void {
             $mock->shouldReceive('execute')
                 ->once()
-                ->with(realpath($projectPath));
+                ->with($projectPath);
         });
 
         $response = $this->deleteJson('/api/projects', [
@@ -254,15 +223,15 @@ describe('DELETE /api/projects', function (): void {
         $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
-                'error' => 'The project directory does not exist.',
+                'error' => 'Project directory does not exist: /non/existent/project/path',
             ]);
     });
 
-    it('returns 422 if project is outside allowlisted paths', function (): void {
+    it('returns 422 if project is outside all configured category paths', function (): void {
         $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', ['/some/path']);
+        $settingsService->set('category_paths', ['Active' => ['/some/path']]);
 
-        // Create temp folder outside allowlisted
+        // Create temp folder outside any configured category path
         $projectPath = sys_get_temp_dir().'/Active/unauthorized';
         if (! is_dir(dirname($projectPath))) {
             mkdir(dirname($projectPath), 0755, true);
@@ -278,35 +247,7 @@ describe('DELETE /api/projects', function (): void {
         $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
-                'error' => 'The project is not located in any allowlisted scan paths.',
-            ]);
-
-        // Clean up
-        rmdir($projectPath);
-        rmdir(dirname($projectPath));
-    });
-
-    it('returns 422 if project directory has invalid category structure', function (): void {
-        $settingsService = resolve(SettingsService::class);
-        $settingsService->set('allowlisted_paths', [sys_get_temp_dir()]);
-
-        // Invalid category 'Production'
-        $projectPath = sys_get_temp_dir().'/Production/chirper';
-        if (! is_dir(dirname($projectPath))) {
-            mkdir(dirname($projectPath), 0755, true);
-        }
-        if (! is_dir($projectPath)) {
-            mkdir($projectPath);
-        }
-
-        $response = $this->deleteJson('/api/projects', [
-            'path' => $projectPath,
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'success' => false,
-                'error' => 'Invalid project category directory structure.',
+                'error' => "Project path is not inside any configured category scan path: {$projectPath}",
             ]);
 
         // Clean up

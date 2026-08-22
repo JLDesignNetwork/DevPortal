@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let settings = {
         cache_enabled: false,
         cache_ttl: 300,
-        allowlisted_paths: [],
+        categories: ['Active', 'Archived', 'Sandboxed'],
+        category_paths: { Active: [], Archived: [], Sandboxed: [] },
         splash_recent_count: 5,
         splash_active_count: 5,
         domain_extension: 'test',
@@ -53,9 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsForm = document.getElementById('settings-form');
     const settingsCacheEnabled = document.getElementById('settings-cache-enabled');
     const settingsCacheTtl = document.getElementById('settings-cache-ttl');
-    const settingsPathList = document.getElementById('settings-path-list');
-    const settingsAddPathInput = document.getElementById('settings-add-path-input');
-    const settingsAddPathBtn = document.getElementById('settings-add-path-btn');
+    const settingsCategoryPathsContainer = document.getElementById('settings-category-paths');
     const cacheTtlGroup = document.getElementById('cache-ttl-group');
     const settingsSplashRecentCount = document.getElementById('settings-splash-recent-count');
     const settingsSplashActiveCount = document.getElementById('settings-splash-active-count');
@@ -192,8 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statsSandboxCount) statsSandboxCount.textContent = String(counts.Sandboxed);
     }
 
-    // Move project category & base path via AJAX
-    async function moveProject(sourcePath, targetBasePath, targetCategory) {
+    // Move project to another configured category scan path via AJAX
+    async function moveProject(sourcePath, targetPath) {
         try {
             const response = await fetch('/api/projects/move', {
                 method: 'POST',
@@ -204,8 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     source_path: sourcePath,
-                    target_base_path: targetBasePath,
-                    target_category: targetCategory
+                    target_path: targetPath
                 })
             });
 
@@ -480,16 +478,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
-            // Options for Move select dropdown - Location-aware
+            // Options for Move select dropdown - one option per configured category path
             const projectDirName = project.path.split('/').pop();
-            const selectOptionsHtml = settings.allowlisted_paths.flatMap(basePath => {
-                const baseLabel = basePath.split('/').pop() || basePath;
-                return ['Active', 'Archived', 'Sandboxed'].map(cat => {
-                    const optionDest = `${basePath}/${cat}/${projectDirName}`;
+            const selectOptionsHtml = Object.entries(settings.category_paths || {}).flatMap(([category, paths]) =>
+                paths.map(categoryPath => {
+                    const optionDest = `${categoryPath}/${projectDirName}`;
                     const isSelected = (project.path === optionDest);
-                    return `<option value="${basePath}|${cat}" ${isSelected ? 'selected' : ''}>Move to ${baseLabel}: ${cat}</option>`;
-                });
-            }).join('');
+                    const locationLabel = categoryPath.split('/').pop() || categoryPath;
+                    return `<option value="${categoryPath}" ${isSelected ? 'selected' : ''}>Move to ${category}: ${locationLabel}</option>`;
+                })
+            ).join('');
 
             card.innerHTML = `
                 <div>
@@ -650,11 +648,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.select-category').forEach(select => {
             select.addEventListener('change', (e) => {
                 const sourcePath = select.dataset.sourcePath;
-                const [targetBasePath, targetCategory] = e.target.value.split('|');
+                const targetPath = e.target.value;
+                const targetLabel = e.target.selectedOptions[0] ? e.target.selectedOptions[0].textContent : targetPath;
                 const projectDirName = sourcePath.split('/').pop();
 
-                if (confirm(`Are you sure you want to move project "${projectDirName}" to "${targetCategory}"?`)) {
-                    moveProject(sourcePath, targetBasePath, targetCategory);
+                if (confirm(`Are you sure you want to move project "${projectDirName}" to "${targetLabel}"?`)) {
+                    moveProject(sourcePath, targetPath);
                 } else {
                     // Reset dropdown back to original
                     renderProjects();
@@ -731,6 +730,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (settingsDefaultSort) settingsDefaultSort.value = settings.default_sort || 'date-desc';
         toggleCacheTtlVisibility();
         renderSettingsPaths();
+        updateCategoryTabsVisibility();
+    }
+
+    // Hide category tabs that have no configured scan paths; fall back to Dashboard if the active tab was hidden
+    function updateCategoryTabsVisibility() {
+        const categoryPaths = settings.category_paths || {};
+        let activeTabHidden = false;
+
+        tabButtons.forEach(btn => {
+            const category = btn.dataset.category;
+            if (category === 'Dashboard') return;
+
+            const hasPaths = (categoryPaths[category] || []).length > 0;
+            btn.style.display = hasPaths ? '' : 'none';
+
+            if (!hasPaths && activeCategory === category) {
+                activeTabHidden = true;
+            }
+        });
+
+        if (activeTabHidden) {
+            activeCategory = 'Dashboard';
+        }
     }
 
     // Toggle cache TTL visibility based on cache checkbox
@@ -743,38 +765,180 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Render allowlisted scan paths inside settings list
+    // Render one scan-path list per category inside settings
     function renderSettingsPaths() {
-        if (!settingsPathList) return;
-        settingsPathList.innerHTML = '';
+        if (!settingsCategoryPathsContainer) return;
+        settingsCategoryPathsContainer.innerHTML = '';
 
-        settings.allowlisted_paths.forEach((path, index) => {
-            const pathItem = document.createElement('div');
-            pathItem.className = 'path-item';
-            pathItem.innerHTML = `
-                <div class="path-details">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span class="path-text" title="${path}">${path}</span>
+        const categories = settings.categories || Object.keys(settings.category_paths || {});
+        settings.category_paths = settings.category_paths || {};
+
+        categories.forEach(category => {
+            settings.category_paths[category] = settings.category_paths[category] || [];
+            const paths = settings.category_paths[category];
+
+            const section = document.createElement('div');
+            section.className = 'category-path-section';
+            section.style.marginBottom = '1.5rem';
+            section.innerHTML = `
+                <h4 style="margin-bottom: 0.5rem;">${category} Projects Path</h4>
+                <div class="path-list" data-category="${category}"></div>
+                <div class="add-path-row" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                    <button type="button" class="btn btn-primary category-browse-path-btn" data-category="${category}">Browse for Folder…</button>
                 </div>
-                <button type="button" class="btn-delete" data-index="${index}" aria-label="Delete path">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
             `;
-            settingsPathList.appendChild(pathItem);
+            settingsCategoryPathsContainer.appendChild(section);
+
+            const list = section.querySelector('.path-list');
+            paths.forEach((path, index) => {
+                const pathItem = document.createElement('div');
+                pathItem.className = 'path-item';
+                pathItem.innerHTML = `
+                    <div class="path-details">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span class="path-text" title="${path}">${path}</span>
+                    </div>
+                    <button type="button" class="btn-delete" data-category="${category}" data-index="${index}" aria-label="Delete path">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                `;
+                list.appendChild(pathItem);
+            });
         });
 
-        // Delete button listener
-        settingsPathList.querySelectorAll('.btn-delete').forEach(btn => {
+        // Delete button listeners
+        settingsCategoryPathsContainer.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
                 const idx = parseInt(btn.dataset.index, 10);
-                settings.allowlisted_paths.splice(idx, 1);
+                settings.category_paths[category].splice(idx, 1);
                 renderSettingsPaths();
             });
+        });
+
+        // Browse button listeners
+        settingsCategoryPathsContainer.querySelectorAll('.category-browse-path-btn').forEach(btn => {
+            btn.addEventListener('click', () => openDirectoryBrowser(btn.dataset.category));
+        });
+    }
+
+    // Add a scan path to a category, guarding against duplicates
+    function addCategoryPath(category, path) {
+        settings.category_paths[category] = settings.category_paths[category] || [];
+        if (settings.category_paths[category].includes(path)) {
+            showToast('This scan location is already added.', 'error');
+            return;
+        }
+        settings.category_paths[category].push(path);
+        renderSettingsPaths();
+    }
+
+    // ─── Directory Browser Modal ───────────────────────────────────────
+    const dirBrowserModal = document.getElementById('dir-browser-modal');
+    const dirBrowserClose = document.getElementById('dir-browser-close');
+    const dirBrowserCancel = document.getElementById('dir-browser-cancel');
+    const dirBrowserUp = document.getElementById('dir-browser-up');
+    const dirBrowserSelect = document.getElementById('dir-browser-select');
+    const dirBrowserCurrentPath = document.getElementById('dir-browser-current-path');
+    const dirBrowserList = document.getElementById('dir-browser-list');
+    const dirBrowserError = document.getElementById('dir-browser-error');
+
+    let dirBrowserTargetCategory = null;
+    let dirBrowserCurrentDir = null;
+    let dirBrowserParentDir = null;
+
+    async function openDirectoryBrowser(category) {
+        dirBrowserTargetCategory = category;
+        if (dirBrowserModal) {
+            dirBrowserModal.classList.add('open');
+            dirBrowserModal.setAttribute('aria-hidden', 'false');
+        }
+        await loadDirectoryBrowserPath(null);
+    }
+
+    function closeDirectoryBrowser() {
+        if (dirBrowserModal) {
+            dirBrowserModal.classList.remove('open');
+            dirBrowserModal.setAttribute('aria-hidden', 'true');
+        }
+        dirBrowserTargetCategory = null;
+    }
+
+    async function loadDirectoryBrowserPath(path) {
+        if (dirBrowserError) dirBrowserError.style.display = 'none';
+
+        try {
+            const url = path
+                ? `/api/browse-directories?path=${encodeURIComponent(path)}`
+                : '/api/browse-directories';
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Could not browse that directory.');
+            }
+
+            dirBrowserCurrentDir = result.current_path;
+            dirBrowserParentDir = result.parent_path;
+
+            if (dirBrowserCurrentPath) dirBrowserCurrentPath.textContent = dirBrowserCurrentDir;
+            if (dirBrowserUp) dirBrowserUp.disabled = !dirBrowserParentDir;
+
+            if (dirBrowserList) {
+                dirBrowserList.innerHTML = '';
+                if (result.directories.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.style.cssText = 'padding: 0.75rem; color: var(--text-muted); font-size: 0.85rem;';
+                    empty.textContent = 'No subfolders here.';
+                    dirBrowserList.appendChild(empty);
+                }
+                result.directories.forEach(dir => {
+                    const row = document.createElement('button');
+                    row.type = 'button';
+                    row.className = 'dir-browser-entry';
+                    row.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left; padding: 0.6rem 0.75rem; border: none; border-bottom: 1px solid var(--border); background: transparent; color: var(--text-main); cursor: pointer; font-size: 0.85rem;';
+                    row.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span></span>
+                    `;
+                    row.querySelector('span').textContent = dir.name;
+                    row.addEventListener('click', () => loadDirectoryBrowserPath(dir.path));
+                    dirBrowserList.appendChild(row);
+                });
+            }
+        } catch (error) {
+            if (dirBrowserError) {
+                dirBrowserError.textContent = error.message;
+                dirBrowserError.style.display = 'block';
+            }
+        }
+    }
+
+    if (dirBrowserClose) dirBrowserClose.addEventListener('click', closeDirectoryBrowser);
+    if (dirBrowserCancel) dirBrowserCancel.addEventListener('click', closeDirectoryBrowser);
+    if (dirBrowserUp) {
+        dirBrowserUp.addEventListener('click', () => {
+            if (dirBrowserParentDir) loadDirectoryBrowserPath(dirBrowserParentDir);
+        });
+    }
+    if (dirBrowserSelect) {
+        dirBrowserSelect.addEventListener('click', () => {
+            if (dirBrowserTargetCategory && dirBrowserCurrentDir) {
+                addCategoryPath(dirBrowserTargetCategory, dirBrowserCurrentDir);
+            }
+            closeDirectoryBrowser();
+        });
+    }
+    if (dirBrowserModal) {
+        dirBrowserModal.addEventListener('click', (e) => {
+            if (e.target === dirBrowserModal) closeDirectoryBrowser();
         });
     }
 
@@ -863,32 +1027,6 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsCacheEnabled.addEventListener('change', toggleCacheTtlVisibility);
     }
 
-    // Add scanning path to settings
-    if (settingsAddPathBtn && settingsAddPathInput) {
-        const addPathAction = () => {
-            const path = settingsAddPathInput.value.trim();
-            if (path === '') {
-                showToast('Please enter a directory path.', 'error');
-                return;
-            }
-            if (settings.allowlisted_paths.includes(path)) {
-                showToast('This scan location is already added.', 'error');
-                return;
-            }
-            settings.allowlisted_paths.push(path);
-            settingsAddPathInput.value = '';
-            renderSettingsPaths();
-        };
-
-        settingsAddPathBtn.addEventListener('click', addPathAction);
-        settingsAddPathInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addPathAction();
-            }
-        });
-    }
-
     // Save Settings
     if (settingsForm) {
         settingsForm.addEventListener('submit', async (e) => {
@@ -906,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = {
                 cache_enabled: settingsCacheEnabled ? settingsCacheEnabled.checked : false,
                 cache_ttl: settingsCacheTtl ? parseInt(settingsCacheTtl.value, 10) : 300,
-                allowlisted_paths: settings.allowlisted_paths,
+                category_paths: settings.category_paths,
                 splash_recent_count: settingsSplashRecentCount ? parseInt(settingsSplashRecentCount.value, 10) : 5,
                 splash_active_count: settingsSplashActiveCount ? parseInt(settingsSplashActiveCount.value, 10) : 5,
                 domain_extension: settingsDomainExtension ? settingsDomainExtension.value.trim() : 'test',

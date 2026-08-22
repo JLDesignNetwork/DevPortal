@@ -28,7 +28,7 @@ class TestEntryPoints
      */
     public function execute(): string
     {
-        $projects = $this->scanner->scan($this->settingsService->getAllowlistedPaths());
+        $projects = $this->scanner->scan();
         $domainExtension = $this->settingsService->get('domain_extension', 'test');
 
         $excludeCats = array_map(strtolower(...), $this->settingsService->getArray('entry_exclude_categories', ['Archived']));

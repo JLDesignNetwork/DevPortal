@@ -241,15 +241,10 @@
                             <div id="settings-paths" class="settings-panel" style="display: none;">
                                 <div class="settings-section">
                                     <h3 style="margin-top: 0;">Scan Locations</h3>
-                                    <p class="section-desc">Specify directory paths to scan. Each location should contain <code>Active</code>, <code>Archived</code>, or <code>Sandboxed</code> subfolders.</p>
-                                    
-                                    <div class="path-list" id="settings-path-list">
-                                        {{-- Rendered dynamically by JavaScript --}}
-                                    </div>
-                                    
-                                    <div class="add-path-row" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                        <input type="text" id="settings-add-path-input" class="form-input" placeholder="e.g., /Users/username/Sites" autocomplete="off" aria-label="New scan directory path" style="flex: 1;">
-                                        <button type="button" id="settings-add-path-btn" class="btn btn-primary">Add Path</button>
+                                    <p class="section-desc">Specify one or more directory paths to scan for each project category. A category with no path configured is hidden from the dashboard tabs.</p>
+
+                                    <div id="settings-category-paths">
+                                        {{-- One section per category, rendered dynamically by JavaScript --}}
                                     </div>
                                 </div>
                             </div>
@@ -340,6 +335,33 @@
                 </form>
         </main>
 
+    </div>
+
+    {{-- Directory Browser Modal --}}
+    <div id="dir-browser-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="dir-browser-title">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2 id="dir-browser-title" style="font-size: 1.1rem;">Select a Folder</h2>
+                <button type="button" id="dir-browser-close" class="btn-close" aria-label="Close folder browser">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="dir-browser-current-path" style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; word-break: break-all;"></div>
+                <div id="dir-browser-error" class="form-help" style="color: var(--danger, #e15759); display: none; margin-bottom: 0.75rem;"></div>
+                <div id="dir-browser-list" style="max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius, 8px);"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="dir-browser-up" class="btn" style="margin-right: auto;">Up a Level</button>
+                <button type="button" id="dir-browser-cancel" class="btn">Cancel</button>
+                <button type="button" id="dir-browser-select" class="btn btn-primary">Select This Folder</button>
+            </div>
+        </div>
     </div>
 
     {{-- Project Details Drawer / Modal --}}

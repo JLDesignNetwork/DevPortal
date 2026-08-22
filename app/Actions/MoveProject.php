@@ -21,23 +21,31 @@ class MoveProject
     ) {}
 
     /**
-     * Move a project directory to another watch location and category.
+     * Move a project directory into another configured category scan path.
      *
      * @param  string  $sourcePath  The absolute path of the source project folder
-     * @param  string  $targetBasePath  The target base path to move the project to
-     * @param  string  $targetCategory  The category to move to (Active, Archived, Sandboxed)
+     * @param  string  $targetCategoryPath  One of the configured category scan paths to move the project into
      * @return string The new absolute path of the project directory.
      *
      * @throws InvalidArgumentException
      */
-    public function execute(string $sourcePath, string $targetBasePath, string $targetCategory): string
+    public function execute(string $sourcePath, string $targetCategoryPath): string
     {
-        $allowlistedPaths = $this->settingsService->getAllowlistedPaths();
-        $allowedCategories = $this->settingsService->getAllowedCategories();
+        $allConfiguredPaths = array_merge(...array_values($this->settingsService->getCategoryPaths()));
 
-        // 1. Validate target category
-        if (! in_array($targetCategory, $allowedCategories, true)) {
-            throw new InvalidArgumentException("Invalid target category: {$targetCategory}. Allowed categories are: ".implode(', ', $allowedCategories));
+        // 1. Validate target path is a configured category scan path
+        $realTargetCategoryPath = realpath($targetCategoryPath);
+        $isTargetConfigured = false;
+        foreach ($allConfiguredPaths as $path) {
+            $realConfiguredPath = realpath($path);
+            if ($path === $targetCategoryPath || ($realConfiguredPath !== false && $realConfiguredPath === $realTargetCategoryPath)) {
+                $isTargetConfigured = true;
+                break;
+            }
+        }
+
+        if (! $isTargetConfigured) {
+            throw new InvalidArgumentException("Target path is not a configured category scan path: {$targetCategoryPath}");
         }
 
         // 2. Validate source path existence
@@ -45,56 +53,38 @@ class MoveProject
             throw new InvalidArgumentException("Source project directory does not exist: {$sourcePath}");
         }
 
-        // 2a. Validate target base path is allowlisted
-        $isTargetAllowlisted = false;
-        foreach ($allowlistedPaths as $path) {
-            if (realpath($path) === realpath($targetBasePath) || $path === $targetBasePath) {
-                $isTargetAllowlisted = true;
+        // 3. Validate source path's parent is a configured category scan path
+        $realSource = realpath($sourcePath);
+        $sourceParent = dirname($realSource);
+
+        $isSourceConfigured = false;
+        foreach ($allConfiguredPaths as $path) {
+            if (realpath($path) === $sourceParent) {
+                $isSourceConfigured = true;
                 break;
             }
         }
 
-        if (! $isTargetAllowlisted) {
-            throw new InvalidArgumentException("Target base path is not an allowlisted scan path: {$targetBasePath}");
+        if (! $isSourceConfigured) {
+            throw new InvalidArgumentException("Source path is not inside any configured category scan path: {$sourcePath}");
         }
 
-        // 2b. Validate source path is contained within an allowlisted path
-        $realSource = realpath($sourcePath) ?: $sourcePath;
-        $isSourceAllowlisted = false;
-        foreach ($allowlistedPaths as $path) {
-            $realAllowlisted = realpath($path) ?: $path;
-            if (str_starts_with($realSource, $realAllowlisted)) {
-                $isSourceAllowlisted = true;
-                break;
-            }
+        // 4. Define target path
+        $projectDirName = basename($realSource);
+        $targetPath = rtrim($targetCategoryPath, '/').'/'.$projectDirName;
+
+        // 5. Check if it's already at the target location (no-op)
+        if (realpath($targetPath) === $realSource) {
+            return $realSource;
         }
 
-        if (! $isSourceAllowlisted) {
-            throw new InvalidArgumentException("Source path is not inside any allowlisted scan path: {$sourcePath}");
-        }
-
-        // 3. Define target path
-        $projectDirName = basename($sourcePath);
-        $targetPath = $targetBasePath.'/'.$targetCategory.'/'.$projectDirName;
-
-        // 4. Check if it's already in the target category & location (no-op)
-        if (realpath($sourcePath) === realpath($targetPath)) {
-            return $sourcePath;
-        }
-
-        // 5. Prevent collision (destination directory must not exist)
+        // 6. Prevent collision (destination directory must not exist)
         if (File::exists($targetPath)) {
             throw new InvalidArgumentException("A project named '{$projectDirName}' already exists at the target location.");
         }
 
-        // Ensure target category directory exists under target base path
-        $targetCategoryDir = $targetBasePath.'/'.$targetCategory;
-        if (! File::exists($targetCategoryDir)) {
-            File::makeDirectory($targetCategoryDir, 0755, true);
-        }
-
-        // 6. Perform the move
-        $success = File::move($sourcePath, $targetPath);
+        // 7. Perform the move
+        $success = File::move($realSource, $targetPath);
 
         if (! $success) {
             throw new InvalidArgumentException("Failed to move the project directory from '{$sourcePath}' to '{$targetPath}'. Check filesystem permissions.");

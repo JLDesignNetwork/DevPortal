@@ -60,8 +60,7 @@ final class MaintenanceController extends Controller
      */
     public function syncAllVersions(Request $request): JsonResponse
     {
-        $paths = $this->settingsService->getAllowlistedPaths();
-        $projects = $this->projectScanner->scan($paths);
+        $projects = $this->projectScanner->scan();
 
         $results = [];
         $successCount = 0;

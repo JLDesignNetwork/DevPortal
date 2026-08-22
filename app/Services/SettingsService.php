@@ -59,23 +59,37 @@ class SettingsService
     }
 
     /**
-     * Get the allowlisted directory paths to scan.
+     * Get the configured scan paths per category (e.g. "Active" => ["/Users/.../Sites/Active"]).
+     * Every allowed category is always present as a key, defaulting to an empty array
+     * when the user hasn't configured a location for it yet.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public function getCategoryPaths(): array
+    {
+        $val = $this->get('category_paths');
+        $decoded = $val !== null ? json_decode((string) $val, true) : null;
+        if (! is_array($decoded)) {
+            $decoded = [];
+        }
+
+        $result = [];
+        foreach ($this->getAllowedCategories() as $category) {
+            $paths = $decoded[$category] ?? [];
+            $result[$category] = is_array($paths) ? array_values(array_filter($paths, 'is_string')) : [];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get the configured scan paths for a single category.
      *
      * @return array<int, string>
      */
-    public function getAllowlistedPaths(): array
+    public function getCategoryPathsFor(string $category): array
     {
-        $val = $this->get('allowlisted_paths');
-        if ($val === null) {
-            return [base_path('../../')];
-        }
-
-        $decoded = json_decode((string) $val, true);
-        if (! is_array($decoded)) {
-            return [base_path('../../')];
-        }
-
-        return $decoded;
+        return $this->getCategoryPaths()[$category] ?? [];
     }
 
     /**

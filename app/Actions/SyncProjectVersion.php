@@ -35,7 +35,7 @@ class SyncProjectVersion
         }
 
         // Use the scanner to determine the absolute highest version available
-        $scannedProjects = $this->scanner->scan([dirname($realPath, 2)]);
+        $scannedProjects = $this->scanner->scan();
         $projectData = array_find($scannedProjects, fn ($p): bool => $p['path'] === $realPath);
 
         if (! $projectData) {

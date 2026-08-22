@@ -21,21 +21,18 @@ class ProjectScanner
     ) {}
 
     /**
-     * Scan the given base paths and return parsed project details.
+     * Scan each category's configured paths and return parsed project details.
      *
-     * @param  array<int, string>  $basePaths
      * @return array<int, array<string, mixed>>
      */
-    public function scan(array $basePaths): array
+    public function scan(): array
     {
-        $categories = $this->settingsService->getAllowedCategories();
+        $categoryPaths = $this->settingsService->getCategoryPaths();
         $allProjects = [];
         $processedPaths = [];
 
-        foreach ($basePaths as $basePath) {
-            foreach ($categories as $category) {
-                $categoryPath = $basePath.'/'.$category;
-
+        foreach ($categoryPaths as $category => $paths) {
+            foreach ($paths as $categoryPath) {
                 if (File::isDirectory($categoryPath)) {
                     try {
                         $projectDirs = File::directories($categoryPath);
@@ -108,7 +105,7 @@ class ProjectScanner
                             'platform_host' => $this->resolvePlatformHost($projectPathStr),
                             'platform_visibility' => $this->resolvePlatformVisibility($projectPathStr),
                             'path' => $projectPathStr, // Absolute path for actions
-                            'relative_path' => str_replace($basePath.'/', '', $projectPathStr),
+                            'relative_path' => $category.'/'.$projectDirName,
                             'last_modified' => $lastModified,
                             'last_modified_timestamp' => $mtime,
                             'created_at' => $createdData['created_at'],

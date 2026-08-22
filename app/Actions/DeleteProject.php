@@ -34,25 +34,20 @@ class DeleteProject
         }
 
         $realProjectPath = realpath($projectPath);
+        $parentPath = dirname($realProjectPath);
 
-        $categoryPath = dirname($realProjectPath);
-        $basePath = dirname($categoryPath);
-        $category = basename($categoryPath);
-
-        if (! in_array($category, $this->settingsService->getAllowedCategories(), true)) {
-            throw new InvalidArgumentException("Invalid project category directory structure: {$category}");
-        }
-
-        $isAllowlisted = false;
-        foreach ($this->settingsService->getAllowlistedPaths() as $path) {
-            if (realpath($path) === $basePath) {
-                $isAllowlisted = true;
-                break;
+        $isConfigured = false;
+        foreach ($this->settingsService->getCategoryPaths() as $paths) {
+            foreach ($paths as $path) {
+                if (realpath($path) === $parentPath) {
+                    $isConfigured = true;
+                    break 2;
+                }
             }
         }
 
-        if (! $isAllowlisted) {
-            throw new InvalidArgumentException("Project path is not inside any allowlisted scan path: {$projectPath}");
+        if (! $isConfigured) {
+            throw new InvalidArgumentException("Project path is not inside any configured category scan path: {$projectPath}");
         }
 
         $success = File::deleteDirectory($realProjectPath);

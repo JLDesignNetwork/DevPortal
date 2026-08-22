@@ -8,6 +8,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\DirectoryBrowserController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
@@ -24,3 +25,4 @@ Route::post('/api/settings', [SettingsController::class, 'update']);
 Route::post('/api/maintenance/sync-version', [MaintenanceController::class, 'syncVersion']);
 Route::post('/api/maintenance/sync-all-versions', [MaintenanceController::class, 'syncAllVersions']);
 Route::post('/api/maintenance/test-entry-points', [MaintenanceController::class, 'testEntryPoints']);
+Route::get('/api/browse-directories', [DirectoryBrowserController::class, 'index']);
