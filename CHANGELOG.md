@@ -5,6 +5,16 @@ All notable changes to **DevPortal** will be documented in this file.
 The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to the [JLDN Generational Versioning Schema (GVS)](https://github.com/JLDesignNetwork).
 
+## [2605.4.4-bs] - 2026-08-23
+
+### Fixed
+- **CI Quality Gate**: Applied Rector PHP 8.4 modernization (`array_any()`, multi-continue, strict empty-array checks, first-class callable syntax) to 4 files that predated a Rector rule-set update; verified behavior-preserving via full Pest suite (72/72 pass).
+- **`.env.example` Visibility**: A broad `.env.*` glob (introduced globally via `~/.gitignore_global`) combined with the local dotfile allowlist pattern were both independently hiding `.env.example` from git. Added an explicit `!.env.example` exception locally and globally.
+
+### Changed
+- **`.gitignore` Restructured**: Replaced 47 lines of explicit deny-rules with a `[._]*` broad glob plus a 10-entry `!`-prefixed allowlist, aligning with the JLDN Standard adopted globally. Fixed a latent `/_[*]/` bracket-literal bug and a duplicate `.junie/` entry as a side effect.
+- **`.agents/` Tracking Finalized**: Settled on fully untracked `.agents/` with no exceptions, after a trial `.gitkeep` carve-out was tried and reverted.
+
 ## [2605.4.3-bs] - 2026-08-18
 
 ### Added

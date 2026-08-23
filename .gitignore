@@ -1,10 +1,3 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
 # Framework & Dependency Directories
 /auth.json
 /node_modules
@@ -15,33 +8,24 @@
 /public/fonts-manifest.dev.json
 /storage/*.key
 /storage/pail
-/.phpunit.cache
-_ide_helper.php
 Homestead.json
 Homestead.yaml
-Thumbs.db
-
-# Personal IDE & Editor Workspaces
-/.codex
-/.cursor/
-/.idea/
-/.junie/
-/.nova/
-/.vscode/
-/.zed/
-/.ai/
-/.antigravitycli/
-/_[*]/
-
-# Agent & Scratch Environment
-.env.*
-._*
-.agents/
 
 # Local Project Development Folders
 /Active/
 /Production/
 /justafolder/
-.mcp.json
-.scratches/
-.junie/
+
+# Dotfiles & underscore-prefixed paths (broad glob; explicit allowlist for what must stay tracked)
+[._]*
+!.aiexclude
+!.aiignore
+!.editorconfig
+!.gitattributes
+!.github/
+!.gitignore
+!.gitkeep
+!.htaccess
+!.npmrc
+!.dev/
+!.env.example

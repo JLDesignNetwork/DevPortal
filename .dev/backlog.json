@@ -88,5 +88,41 @@
     "details": "Update the README.md frontmatter to include the new `type` and `platform` classification keys per the updated AGENTS.md schema.",
     "created_at": "2026-08-19T20:36:19+02:00",
     "existed_since": "2608.1.0-a"
+  },
+  {
+    "id": "PROJ-TODO-10",
+    "title": "Fix CI Quality Gate: PHP 8.4 Modernization via Rector",
+    "status": "completed",
+    "priority": "high-1",
+    "details": "`./vendor/bin/rector process --dry-run` was failing CI on 4 files that predated a Rector rule-set update. Applied `rector process` (array_any(), multi-continue, strict empty-array checks, first-class callable syntax) then `pint`; verified behavior-preserving via full Pest suite (72/72 pass).",
+    "created_at": "2026-08-23T00:00:00+02:00",
+    "existed_since": "2605.4.3-bs"
+  },
+  {
+    "id": "PROJ-TODO-11",
+    "title": "Resolve .agents/ Tracking Scope",
+    "status": "completed",
+    "priority": "medium-1",
+    "details": "Settled on fully untracked .agents/ with no exceptions (a trial !.agents/scratch/.gitkeep carve-out was tried and explicitly reverted per review). .gitignore now excludes the whole directory.",
+    "created_at": "2026-08-23T00:00:00+02:00",
+    "existed_since": "2605.4.3-bs"
+  },
+  {
+    "id": "PROJ-TODO-12",
+    "title": "Restructure .gitignore to Allowlist Pattern",
+    "status": "completed",
+    "priority": "medium-2",
+    "details": "Rebuilt .gitignore from 47 lines of explicit deny-rules to a `[._]*` broad glob plus an explicit `!`-prefixed allowlist (10 entries), fixing a latent `/_[*]/` bracket-literal bug and a duplicate `.junie/` entry as a side effect. Aligns with the JLDN Standard adopted globally in `~/.gitignore_global`.",
+    "created_at": "2026-08-23T00:00:00+02:00",
+    "existed_since": "2605.4.3-bs"
+  },
+  {
+    "id": "PROJ-TODO-13",
+    "title": "Fix .env.example Hidden by Broad Env Glob",
+    "status": "completed",
+    "priority": "high-2",
+    "details": "The global `.env.*` rule (added to `~/.gitignore_global`) combined with the local `[._]*` allowlist pattern both independently hid `.env.example` from git. Added `!.env.example` to both the global gitignore and this project's local .gitignore. No prior history was lost (file was never tracked before), but it was unable to be added going forward until fixed.",
+    "created_at": "2026-08-23T00:00:00+02:00",
+    "existed_since": "2605.4.3-bs"
   }
 ]
