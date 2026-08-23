@@ -76,7 +76,7 @@ class SettingsService
         $result = [];
         foreach ($this->getAllowedCategories() as $category) {
             $paths = $decoded[$category] ?? [];
-            $result[$category] = is_array($paths) ? array_values(array_filter($paths, 'is_string')) : [];
+            $result[$category] = is_array($paths) ? array_values(array_filter($paths, is_string(...))) : [];
         }
 
         return $result;

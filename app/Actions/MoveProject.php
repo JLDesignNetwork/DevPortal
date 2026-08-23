@@ -56,14 +56,7 @@ class MoveProject
         // 3. Validate source path's parent is a configured category scan path
         $realSource = realpath($sourcePath);
         $sourceParent = dirname($realSource);
-
-        $isSourceConfigured = false;
-        foreach ($allConfiguredPaths as $path) {
-            if (realpath($path) === $sourceParent) {
-                $isSourceConfigured = true;
-                break;
-            }
-        }
+        $isSourceConfigured = array_any($allConfiguredPaths, fn ($path): bool => realpath($path) === $sourceParent);
 
         if (! $isSourceConfigured) {
             throw new InvalidArgumentException("Source path is not inside any configured category scan path: {$sourcePath}");

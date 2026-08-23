@@ -241,11 +241,11 @@ class ProjectScanner
             }
         }
         // PHP library (no laravel, no web entry)
-        if (! empty($composerDeps) && ! $this->hasWebEntryPoint($path)) {
+        if ($composerDeps !== [] && ! $this->hasWebEntryPoint($path)) {
             return 'library';
         }
         // npm-only library
-        if (empty($composerDeps) && ! empty($npmDeps) && ! $this->hasWebEntryPoint($path)) {
+        if ($composerDeps === [] && $npmDeps !== [] && ! $this->hasWebEntryPoint($path)) {
             return 'library';
         }
         // Docs heavy (no src, no public)

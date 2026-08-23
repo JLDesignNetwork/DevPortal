@@ -30,10 +30,15 @@ final class DirectoryBrowserController extends Controller
         $entries = @scandir($realPath) ?: [];
 
         foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || str_starts_with($entry, '.')) {
+            if ($entry === '.') {
                 continue;
             }
-
+            if ($entry === '..') {
+                continue;
+            }
+            if (str_starts_with($entry, '.')) {
+                continue;
+            }
             $entryPath = rtrim($realPath, '/').'/'.$entry;
             if (is_dir($entryPath) && is_readable($entryPath)) {
                 $directories[] = ['name' => $entry, 'path' => $entryPath];
