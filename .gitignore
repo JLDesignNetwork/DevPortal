@@ -36,6 +36,7 @@ Thumbs.db
 # Agent & Scratch Environment
 .env.*
 ._*
+.agents/AGENTS.md
 .agents/scratch/*
 !.agents/scratch/.gitkeep
 
